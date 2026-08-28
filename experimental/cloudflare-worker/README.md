@@ -11,9 +11,10 @@ durablement (TTL 5 min), et une seule instance sert toute la promo.
   pas seulement de la fac. S'il tombe (ou si tu arrêtes de le maintenir), les
   agendas de ceux qui l'utilisent ne se mettent plus à jour. L'URL ADE brute, elle,
   ne dépend que de la fac. À réserver à ceux qui veulent vraiment l'aile en clair.
-- **Fiabilité de la donnée** : l'aile vient du plan UCA 2021 (`ROOMS` dans
-  `worker.js`, à garder synchro avec `index.html` / `docs/SALLES.md`). Une salle
-  inconnue est laissée telle quelle.
+- **Fiabilité de la donnée** : l'aile vient du plan UCA 2021, lue depuis
+  `rooms.json` à la racine du dépôt (source unique, cache ~1h). Édite `rooms.json`
+  + push : le worker se met à jour tout seul, **plus besoin de le re-coller**.
+  Une salle inconnue est laissée telle quelle.
 
 ## Pourquoi Cloudflare et pas GitHub ?
 

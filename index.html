@@ -373,8 +373,8 @@ themeBtn.addEventListener("click", ()=>{
   try{ localStorage.setItem("calfilter.theme",next); }catch(e){}
 });
 
-// Répertoire des salles — [nom, étage, aile, repère]. Aile connue = figure au plan UCA 2021.
-const ROOMS = [
+// Liste de secours (hors-ligne). La source réelle est rooms.json, chargée plus bas et prioritaire.
+let ROOMS = [
   ["Amphi 1","1er","R1","Puy de la Nugère"],
   ["Amphi 4","1er","R2","Puy de Pariou"],
   ["Amphi 5","1er","R3","Puy Mary"],
@@ -433,6 +433,11 @@ function renderRooms(q=""){
 }
 roomSearch.addEventListener("input", ()=>renderRooms(roomSearch.value));
 renderRooms();
+// Source unique : rooms.json écrase la liste de secours ci-dessus (dès que la page est servie en HTTP).
+fetch("rooms.json", {cache:"no-cache"})
+  .then(r=>r.ok?r.json():Promise.reject())
+  .then(d=>{ if(d&&Array.isArray(d.rooms)){ ROOMS=d.rooms.map(x=>[x.nom,x.etage,x.aile||"",x.repere||""]); renderRooms(roomSearch.value); } })
+  .catch(()=>{});
 
 // Onglets
 const tabBtns=[...document.querySelectorAll(".tab")];

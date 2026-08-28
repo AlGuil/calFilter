@@ -5,56 +5,54 @@
  * LOCATION pour y ajouter l'aile (R1/R2/R3) et l'étage, absents de l'export
  * ADE (ex. "Amphi 2B" -> "R1 Amphi 2B (4e)").
  *
+ * La table des salles est lue depuis rooms.json dans le dépôt (source unique) :
+ * édite rooms.json + push, et cette table se met à jour toute seule ici (cache
+ * ~1h). Plus besoin de re-coller ce worker.
+ *
  * Déploiement : voir README.md de ce dossier.
  * Appel : https://<ton-worker>.workers.dev/?resources=9077,4125,50942&nbWeeks=52
  *
  * ⚠️ Expérimental : les agendas abonnés dépendent alors de la disponibilité de
- * ce worker (et non plus seulement de la fac). La table des salles vient d'un
- * plan 2021 — à tenir à jour (cf. docs/SALLES.md). Doit rester synchro avec la
- * constante ROOMS de index.html.
+ * ce worker (et non plus seulement de la fac).
  */
 
 const ADE = "https://edt.uca.fr/jsp/custom/modules/plannings/anonymous_cal.jsp";
+const ROOMS_URL = "https://raw.githubusercontent.com/AlGuil/calFilter/main/rooms.json";
+const CACHE_TTL = 3600; // 1 h — flux ADE et rooms.json ne sont retéléchargés qu'~1x/h (mutualisé).
 
-// nom exact de salle -> [aile, étage]. aile "" = inconnue (on n'ajoute que l'étage).
-const ROOMS = {
-  "Amphi 1": ["R1", "1er"], "Amphi 4": ["R2", "1er"], "Amphi 5": ["R3", "1er"],
-  "Amphi 2A": ["R1", "3e"], "Amphi 6A": ["R3", "3e"],
-  "Amphi 2B": ["R1", "4e"], "Amphi 6B": ["R3", "4e"], "Amphi 3": ["R1", "5e"],
-  "Amphi Volcans (B)": ["", "RDC"], "Auditorium": ["", "RDC"],
-  "Salle 002": ["R1", "RDC"], "Salle 040": ["R1", "RDC"], "Salle 042": ["R2", "RDC"],
-  "Salle 126": ["R1", "1er"], "Salle 127": ["R1", "1er"],
-  "Salle 203": ["", "2e"], "Salle 205": ["R1", "2e"], "Salle 223": ["R1", "2e"],
-  "Salle 224": ["", "2e"], "Salle 225": ["", "2e"], "Salle 226": ["", "2e"],
-  "Salle 227": ["", "2e"], "Salle 228": ["", "2e"], "Salle 234": ["", "2e"],
-  "Salle 236": ["", "2e"], "Salle 237": ["", "2e"], "Salle 243": ["R2", "2e"],
-  "Salle 244": ["R2", "2e"], "Salle 245": ["R2", "2e"], "Salle 246": ["R2", "2e"],
-  "Salle 262": ["R3", "2e"], "Salle 305": ["", "3e"], "Salle 326": ["", "3e"],
-  "Salle 330-342": ["", "3e"], "Salle 345": ["", "3e"], "Salle 431": ["", "4e"],
-  "Salle 449": ["", "4e"], "Salle 501": ["", "5e"], "Salle 502": ["", "5e"],
-  "Salle 505": ["", "5e"], "Salle 527": ["", "5e"], "Salle 532": ["R2", "5e"],
-  "Salle 547": ["R2", "5e"],
-};
-// clés triées par longueur décroissante pour un match par préfixe non ambigu.
-const KEYS = Object.keys(ROOMS).sort((a, b) => b.length - a.length);
-
-function enrichName(name) {
-  const t = name.trim();
-  if (!t) return name;
-  for (const key of KEYS) {
-    if (t === key || t.startsWith(key + " ") || t.startsWith(key + "-")) {
-      const [aile, etage] = ROOMS[key];
-      let out = aile ? aile + " " + t : t;
-      if (etage && !/\(\s*(RDC|\d)/.test(out)) out += " (" + etage + ")";
-      return out;
-    }
+// Charge la table des salles depuis rooms.json (mise en cache 1h au bord Cloudflare).
+// Renvoie { map: {nom: [aile, etage]}, keys: [...] }. En cas d'échec : table vide
+// (le flux est alors renvoyé sans enrichissement, jamais cassé).
+async function getRoomMap() {
+  try {
+    const r = await fetch(ROOMS_URL, { cf: { cacheTtl: CACHE_TTL, cacheEverything: true } });
+    if (!r.ok) return { map: {}, keys: [] };
+    const data = await r.json();
+    const map = {};
+    for (const x of data.rooms || []) map[x.nom] = [x.aile || "", x.etage || ""];
+    const keys = Object.keys(map).sort((a, b) => b.length - a.length);
+    return { map, keys };
+  } catch (e) {
+    return { map: {}, keys: [] };
   }
-  return name; // salle inconnue -> inchangée
 }
 
-// une LOCATION peut lister plusieurs salles, séparées par une virgule échappée "\,"
-function transformLocation(value) {
-  return value.split("\\,").map(enrichName).join("\\,");
+function makeEnricher(map, keys) {
+  const enrich = (name) => {
+    const t = name.trim();
+    if (!t) return name;
+    for (const key of keys) {
+      if (t === key || t.startsWith(key + " ") || t.startsWith(key + "-")) {
+        const [aile, etage] = map[key];
+        let out = aile ? aile + " " + t : t;
+        if (etage && !/\(\s*(RDC|\d)/.test(out)) out += " (" + etage + ")";
+        return out;
+      }
+    }
+    return name; // salle inconnue -> inchangée
+  };
+  // une LOCATION peut lister plusieurs salles, séparées par une virgule échappée "\,"
+  return (value) => value.split("\\,").map(enrich).join("\\,");
 }
 
 // repliage RFC 5545 (lignes <= 75 octets), suffisant pour nos valeurs courtes.
@@ -78,18 +76,23 @@ export default {
     const ade = `${ADE}?resources=${encodeURIComponent(resources)}`
       + `&projectId=4&calType=ical&displayConfigId=128&nbWeeks=${encodeURIComponent(weeks)}`;
 
-    let resp;
+    // flux ADE + table des salles en parallèle (les deux mis en cache 1h au bord)
+    let feed, rooms;
     try {
-      resp = await fetch(ade, { cf: { cacheTtl: 300, cacheEverything: true } });
+      [feed, rooms] = await Promise.all([
+        fetch(ade, { cf: { cacheTtl: CACHE_TTL, cacheEverything: true } }),
+        getRoomMap(),
+      ]);
     } catch (e) {
       return new Response("Flux ADE injoignable.", { status: 502, headers: { "content-type": "text/plain; charset=utf-8" } });
     }
-    if (!resp.ok) {
-      return new Response("Flux ADE indisponible (" + resp.status + ").",
+    if (!feed.ok) {
+      return new Response("Flux ADE indisponible (" + feed.status + ").",
         { status: 502, headers: { "content-type": "text/plain; charset=utf-8" } });
     }
 
-    let text = await resp.text();
+    let text = await feed.text();
+    const transformLocation = makeEnricher(rooms.map, rooms.keys);
     // réécrit chaque propriété LOCATION (en gérant le repliage de ligne)
     text = text.replace(/^LOCATION:((?:.*)(?:\r?\n[ \t].*)*)/gm, (_m, val) => {
       const unfolded = val.replace(/\r?\n[ \t]/g, "");
@@ -99,7 +102,7 @@ export default {
     return new Response(text, {
       headers: {
         "content-type": "text/calendar; charset=utf-8",
-        "cache-control": "public, max-age=300",
+        "cache-control": "public, max-age=" + CACHE_TTL,
         "content-disposition": 'inline; filename="calendar.ics"',
       },
     });

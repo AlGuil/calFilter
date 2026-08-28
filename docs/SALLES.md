@@ -3,8 +3,11 @@
 Le calendrier ADE n'exporte que le **nom court** de la salle (`Amphi 2B`),
 jamais l'aile (`R1`) ni l'étage — cette info n'existe que dans l'appli web de la
 fac. Comme chaque salle est **unique**, son emplacement est une propriété fixe :
-on peut donc la donner via une table statique. Elle est embarquée dans
-`index.html` (constante `ROOMS`) et affichée par le répertoire cherchable.
+on peut donc la donner via une table statique. **Source unique : [`rooms.json`](../rooms.json)**
+à la racine du dépôt. Le site (onglet Salles) le charge, et le worker
+d'enrichissement le lit aussi — édite ce seul fichier puis `git push`, tout se
+met à jour (le worker sous ~1h). `index.html` garde une copie de secours pour le
+mode hors-ligne, mais `rooms.json` est prioritaire dès que la page est servie.
 
 ## Structure du bâtiment
 
@@ -33,5 +36,5 @@ on peut donc la donner via une table statique. Elle est embarquée dans
 Données relevées sur le **plan officiel UCA « Localisation amphithéâtres et
 salles de cours » (2021)**. L'aile n'est renseignée que pour les salles figurant
 explicitement au plan ; pour les autres, seul l'étage (déduit du numéro) est
-donné. Si un amphi/une salle déménage, mettre à jour la constante `ROOMS` dans
-[`../index.html`](../index.html).
+donné. Si un amphi/une salle déménage, mettre à jour [`../rooms.json`](../rooms.json)
+puis `git push`.
