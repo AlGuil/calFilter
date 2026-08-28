@@ -15,7 +15,25 @@ durablement (TTL 5 min), et une seule instance sert toute la promo.
   `worker.js`, à garder synchro avec `index.html` / `docs/SALLES.md`). Une salle
   inconnue est laissée telle quelle.
 
+## Pourquoi Cloudflare et pas GitHub ?
+
+GitHub **n'héberge pas** de fonction HTTP qui s'exécute à chaque requête :
+- GitHub **Pages** = statique uniquement (ne peut pas aller chercher + transformer
+  le flux à la volée) ;
+- GitHub **Actions** = tâches planifiées (CI), pas un point d'accès qui répond en
+  direct — seulement l'ancienne approche « gist mis à jour toutes les heures »,
+  qu'on a écartée (périmé + ne passe pas à l'échelle).
+
+Il n'y a donc pas d'équivalent GitHub à Cloudflare Workers pour un proxy en
+direct. Cloudflare Workers offre **100 000 requêtes/jour gratuites** (largement
+suffisant). Alternatives équivalentes si besoin : Val.town, Deno Deploy.
+
 ## Déployer (compte Cloudflare gratuit)
+
+### Étape 0 — créer le compte
+1. Va sur **https://dash.cloudflare.com/sign-up**.
+2. Email + mot de passe → valide l'email. C'est gratuit, aucune carte demandée
+   pour le plan Workers gratuit.
 
 ### Option A — en ligne de commande (recommandé)
 
