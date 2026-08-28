@@ -1,5 +1,7 @@
 # calFilter
 
+### 👉 [Ouvrir l'appli — alguil.github.io/calFilter](https://alguil.github.io/calFilter/)
+
 Une page web qui te fabrique l'URL de **ton** emploi du temps à partir du
 calendrier officiel de la fac (ADE / UCA) : tu coches tes groupes, tu obtiens un
 lien d'abonnement filtré. **Aucun serveur, aucune maintenance** — c'est la fac
