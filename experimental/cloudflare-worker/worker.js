@@ -55,6 +55,36 @@ function makeEnricher(map, keys) {
   return (value) => value.split("\\,").map(enrich).join("\\,");
 }
 
+// Comptage d'usage anonyme. On dérive un hash SHA-256 de la liste de ressources
+// (normalisée : triée, dédoublonnée). Deux personnes du même groupe -> même hash ;
+// une même personne sur 2 appareils -> même hash. Aucune IP, aucun cookie, rien de
+// personnel : les ressources sont de simples IDs de groupes. Le hash sert de clé
+// pour compter les sélections distinctes actives (plancher du nombre de personnes).
+async function hashResources(resources) {
+  const norm = [...new Set(resources.split(",").map(s => s.trim()).filter(Boolean))]
+    .sort().join(",");
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(norm));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Écrit un point dans Analytics Engine (si le binding USAGE existe), sans bloquer
+// la réponse. blob1 = hash (clé distincte) ; blob2 = ressources brutes (IDs de
+// groupes, non personnels, pour voir les combinaisons populaires) ; blob3 = nbWeeks.
+function recordUsage(env, ctx, resources, weeks) {
+  if (!env || !env.USAGE) return;
+  const task = (async () => {
+    try {
+      const h = await hashResources(resources);
+      env.USAGE.writeDataPoint({
+        indexes: [h.slice(0, 32)],
+        blobs: [h, resources, String(weeks)],
+        doubles: [1],
+      });
+    } catch (e) { /* le comptage ne doit jamais casser le flux */ }
+  })();
+  if (ctx && ctx.waitUntil) ctx.waitUntil(task);
+}
+
 // repliage RFC 5545 (lignes <= 75 octets), suffisant pour nos valeurs courtes.
 function foldLine(line) {
   if (line.length <= 74) return line;
@@ -65,7 +95,7 @@ function foldLine(line) {
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const resources = url.searchParams.get("resources");
     if (!resources) {
@@ -73,6 +103,9 @@ export default {
         { status: 400, headers: { "content-type": "text/plain; charset=utf-8" } });
     }
     const weeks = url.searchParams.get("nbWeeks") || "52";
+
+    // Comptage anonyme (n'ajoute aucune latence : s'exécute après la réponse).
+    recordUsage(env, ctx, resources, weeks);
     const ade = `${ADE}?resources=${encodeURIComponent(resources)}`
       + `&projectId=4&calType=ical&displayConfigId=128&nbWeeks=${encodeURIComponent(weeks)}`;
 

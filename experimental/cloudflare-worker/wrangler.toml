@@ -2,3 +2,10 @@ name = "calfilter"
 main = "worker.js"
 compatibility_date = "2024-11-01"
 workers_dev = true
+
+# Comptage d'usage anonyme (aucune IP, aucun cookie) : chaque appel écrit un point
+# dans Analytics Engine, clé = hash des ressources. Interrogé via scripts/usage_stats.py.
+# Si ce binding est absent, le worker fonctionne quand même (comptage désactivé).
+[[analytics_engine_datasets]]
+binding = "USAGE"
+dataset = "calfilter_usage"

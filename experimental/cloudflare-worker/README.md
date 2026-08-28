@@ -82,3 +82,42 @@ Doit renvoyer un `.ics` où les `LOCATION` portent l'aile et l'étage.
 
 Les autres paramètres ADE (`projectId`, `calType`, `displayConfigId`) sont fixés
 par le worker.
+
+## Compter l'usage (anonyme, optionnel)
+
+Le worker peut compter combien de **sélections distinctes** utilisent le proxy,
+sans rien afficher sur la page. À chaque appel il écrit un point dans **Analytics
+Engine** dont la clé est le **hash SHA-256 des ressources** : aucune IP, aucun
+cookie, rien de personnel (les ressources sont de simples IDs de groupes). Deux
+personnes du même groupe comptent comme **une** sélection — c'est donc un
+**plancher** du nombre de personnes, et ça ne voit que les utilisateurs ayant
+activé « Expérimental » (les abonnements ADE directs restent invisibles).
+
+### 1. Activer le dataset
+
+- **CLI** : le binding est déjà dans [`wrangler.toml`](wrangler.toml)
+  (`[[analytics_engine_datasets]]`, binding `USAGE`). Un simple `wrangler deploy`
+  suffit. (Active « Analytics Engine » sur ton compte si Cloudflare le demande.)
+- **Dashboard** : Worker → **Settings → Bindings → Add → Analytics Engine**,
+  variable `USAGE`, dataset `calfilter_usage`, puis redéploie.
+
+Si le binding est absent, le worker fonctionne quand même — le comptage est juste
+désactivé (il ne casse jamais le flux).
+
+### 2. Créer un jeton API (lecture seule)
+
+dash.cloudflare.com → **My Profile → API Tokens → Create Token → Custom** :
+permission **Account · Account Analytics · Read**. Note aussi ton **Account ID**
+(colonne de droite de Workers & Pages).
+
+### 3. Interroger (depuis ton poste)
+
+```bash
+export CF_ACCOUNT_ID=xxxx
+export CF_API_TOKEN=yyyy
+python scripts/usage_stats.py --days 30
+```
+
+Affiche le nombre de sélections distinctes actives, une estimation du total
+d'appels, et les combinaisons de groupes les plus fréquentes. (Détails et options
+en tête de [`../../scripts/usage_stats.py`](../../scripts/usage_stats.py).)
