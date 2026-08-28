@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -365,7 +365,9 @@ function flash(btn,txt){ const o=btn.textContent; btn.textContent=txt; setTimeou
 // Thème
 const themeBtn=document.getElementById("themeBtn");
 function applyTheme(t){ if(t) document.documentElement.setAttribute("data-theme",t); else document.documentElement.removeAttribute("data-theme"); }
-try{ applyTheme(localStorage.getItem("calfilter.theme")); }catch(e){}
+// Thème clair par défaut (data-theme="light" sur <html>) ; on n'applique un choix
+// mémorisé que s'il existe (permet de passer/rester en sombre via le toggle).
+try{ const s=localStorage.getItem("calfilter.theme"); if(s) applyTheme(s); }catch(e){}
 themeBtn.addEventListener("click", ()=>{
   const cur=document.documentElement.getAttribute("data-theme");
   const isDark = cur ? cur==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
