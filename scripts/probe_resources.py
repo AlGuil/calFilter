@@ -9,8 +9,8 @@ Usage :
     python scripts/probe_resources.py --weeks 40     # horizon plus large
     python scripts/probe_resources.py --json map.json # dump JSON détaillé
 
-La liste des ressources est lue depuis filters.yaml (source_url) si présente,
-sinon depuis la constante RES ci-dessous.
+La liste complète des ressources de la promo est la constante RESOURCES ci-dessous
+(relevée depuis l'URL fournie par la fac). Mets-la à jour si la fac renumérote.
 """
 
 from __future__ import annotations
@@ -29,14 +29,19 @@ BASE = ("https://edt.uca.fr/jsp/custom/modules/plannings/anonymous_cal.jsp"
         "?resources={rid}&projectId=4&calType=ical&nbWeeks={nw}&displayConfigId=128")
 
 
+# Liste complète des ressources de la promo DFGSP2 (toutes celles de l'URL fournie
+# par la fac). Sonder chacune isolément révèle à quel groupe/UE elle correspond.
+RESOURCES = (
+    "51303,51302,51300,51299,51298,51297,51296,51295,51294,51293,51292,51291,"
+    "51290,51289,51288,50942,50941,48538,64001,64000,63999,63998,63997,9079,9078,"
+    "9077,61319,61318,60863,60862,60530,60529,60528,60527,60526,60525,60524,6139,"
+    "6130,6127,6126,6125,5644,4388,4387,4386,4385,4382,4321,4127,4125,4116,4114,"
+    "4110,4109,4029,38837,54153,34457"
+)
+
+
 def resources_from_config() -> list[str]:
-    cfg = Path(__file__).resolve().parent.parent / "filters.yaml"
-    if not cfg.exists():
-        return []
-    m = re.search(r"resources=([0-9,]+)", cfg.read_text(encoding="utf-8"))
-    if not m:
-        return []
-    return list(dict.fromkeys(m.group(1).split(",")))
+    return list(dict.fromkeys(RESOURCES.split(",")))
 
 
 def unfold(txt: str) -> list[str]:

@@ -66,8 +66,10 @@ Envoie-leur simplement l'URL de la page. Chacun coche **ses** groupes et récup�
 
 ```
 index.html                     ← le picker + répertoire des salles (tout est là)
+rooms.json                     ← source unique des salles (aile/étage), éditable
 docs/RESSOURCES.md             ← cartographie des ressources (ID → groupe)
 docs/SALLES.md                 ← localisation des salles (aile/étage/amphi)
+docs/MAINTENANCE.md            ← quoi faire quand le S2 sort / màj groupes & salles
 docs/FLUX.md                   ← structure/vocabulaire du flux ADE
 scripts/probe_resources.py     ← re-cartographier les ressources
 experimental/cloudflare-worker ← proxy optionnel : aile R1/R2/R3 dans le lieu
