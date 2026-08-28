@@ -70,8 +70,22 @@ docs/RESSOURCES.md             ← cartographie des ressources (ID → groupe)
 docs/SALLES.md                 ← localisation des salles (aile/étage/amphi)
 docs/FLUX.md                   ← structure/vocabulaire du flux ADE
 scripts/probe_resources.py     ← re-cartographier les ressources
+experimental/cloudflare-worker ← proxy optionnel : aile R1/R2/R3 dans le lieu
 legacy/                        ← ancien back-end (Python/gist/workflow), parqué
 ```
+
+## Option expérimentale : l'aile (R1/R2/R3) dans le lieu du cours
+
+L'export ADE ne donne que le nom court de la salle (`Amphi 2B`). Un petit
+**proxy Cloudflare Worker** (gratuit) peut récupérer le flux en direct et
+réécrire chaque lieu en `R1 Amphi 2B (4e)`. Une fois déployé, renseigne son URL
+dans `PROXY_BASE` (en haut du script de `index.html`) : l'option « 🧪
+Expérimental » s'active alors dans l'onglet Calendrier.
+
+⚠️ **À savoir** : activer l'option fait dépendre les agendas abonnés de la
+disponibilité de ce proxy (et plus seulement de la fac). Réservé à ceux qui
+veulent vraiment l'aile en clair. Tout est dans
+[experimental/cloudflare-worker/](experimental/cloudflare-worker/README.md).
 
 ## Et le back-end d'avant ?
 

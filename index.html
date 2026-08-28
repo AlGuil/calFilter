@@ -123,6 +123,14 @@
   .tab:hover{color:var(--ink)}
   .tab.active{color:var(--accent); border-bottom-color:var(--accent)}
   .tabpane[hidden]{display:none}
+  code{background:var(--bg); border:1px solid var(--line); border-radius:5px; padding:1px 5px; font-size:.82em}
+  /* Expérimental */
+  .exp-badge{display:inline-block; background:var(--warn-soft); color:var(--warn); border:1px solid var(--warn);
+    border-radius:6px; font-size:.68rem; font-weight:700; padding:1px 7px; vertical-align:middle; margin-left:8px; letter-spacing:.04em}
+  .expwarn{background:var(--warn-soft); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+    font-size:.84rem; color:var(--ink); margin-top:12px}
+  .expwarn b{color:var(--warn)}
+  #exp .opt{display:inline-flex}
   /* Plan dépliable */
   details.planwrap{margin-top:16px}
   details.planwrap > summary{cursor:pointer; color:var(--accent); font-weight:600; padding:8px 0}
@@ -193,6 +201,18 @@
       <b>Outlook</b> : Ajouter un calendrier → <i>S'abonner à partir du web</i>.
     </div>
   </div>
+
+  <div class="card" id="exp">
+    <h2>🧪 Expérimental <span class="exp-badge">BÊTA</span></h2>
+    <p class="hint">Écrit l'aile et l'étage dans le lieu de chaque cours (ex. « R1 Amphi 2B (4e) »), via un petit proxy gratuit à héberger.</p>
+    <label class="opt" id="expLabel">
+      <input type="checkbox" id="expToggle">
+      <span class="dot sq"></span>
+      <span class="lbl">Afficher l'aile (R1/R2/R3) dans le lieu</span>
+    </label>
+    <div class="expwarn" id="expWarn" hidden><b>⚠️ À savoir :</b> ton agenda dépendra du proxy que tu héberges — s'il tombe, il ne se met plus à jour (l'URL ADE brute, elle, ne dépend que de la fac). L'aile vient d'un plan 2021, à vérifier.</div>
+    <div class="hint" id="expSetup" hidden style="margin-top:12px">Non configuré. Pour l'activer : déploie le proxy (<code>experimental/cloudflare-worker</code>) puis renseigne son URL dans <code>PROXY_BASE</code> (en haut du script de <code>index.html</code>).</div>
+  </div>
   </section>
 
   <section id="tab-rooms" class="tabpane" role="tabpanel" hidden>
@@ -231,6 +251,10 @@ const BASE = "https://edt.uca.fr/jsp/custom/modules/plannings/anonymous_cal.jsp"
 const FIXED = "projectId=4&calType=ical&displayConfigId=128";
 const LS_KEY = "calfilter.selection.v1";
 
+// EXPÉRIMENTAL : URL de ton proxy Cloudflare Worker (voir experimental/cloudflare-worker).
+// Laisse "" tant qu'il n'est pas déployé — l'option restera désactivée.
+const PROXY_BASE = "";
+
 // Ressources de la promo DFGSP2, relevées empiriquement (voir docs/RESSOURCES.md).
 const SECTIONS = [
   { title:"Travaux pratiques (TP)", hint:"Ton groupe de TP.", items:[
@@ -264,25 +288,40 @@ const countEl=document.getElementById("count");
 const copyBtn=document.getElementById("copyBtn");
 const subBtn=document.getElementById("subBtn");
 const weeksEl=document.getElementById("weeks");
+const expToggle=document.getElementById("expToggle");
+const expWarn=document.getElementById("expWarn");
+const expSetup=document.getElementById("expSetup");
 const boxes=()=>[...document.querySelectorAll('input[type=checkbox][data-id]')];
 
 function selectedIds(){ return boxes().filter(b=>b.checked).map(b=>b.dataset.id); }
+function expEnabled(){ return !!PROXY_BASE && expToggle.checked; }
 
 function currentUrl(){
   const ids=selectedIds();
   if(!ids.length) return "";
-  return `${BASE}?resources=${ids.join(",")}&${FIXED}&nbWeeks=${weeksEl.value}`;
+  const qs=`resources=${ids.join(",")}&nbWeeks=${weeksEl.value}`;
+  if(expEnabled()) return `${PROXY_BASE.replace(/\/$/,"")}/?${qs}`;
+  return `${BASE}?${qs}&${FIXED}`;
 }
 
 function save(){
-  try{ localStorage.setItem(LS_KEY, JSON.stringify({ids:selectedIds(),weeks:weeksEl.value})); }catch(e){}
+  try{ localStorage.setItem(LS_KEY, JSON.stringify({ids:selectedIds(),weeks:weeksEl.value,exp:expToggle.checked})); }catch(e){}
 }
 function load(){
   try{
     const s=JSON.parse(localStorage.getItem(LS_KEY)||"{}");
     if(s.weeks) weeksEl.value=s.weeks;
     if(Array.isArray(s.ids)) boxes().forEach(b=>{ if(s.ids.includes(b.dataset.id)) b.checked=true; });
+    if(s.exp) expToggle.checked=true;
   }catch(e){}
+}
+// Configure l'option expérimentale selon que le proxy est renseigné ou non.
+function setupExp(){
+  if(!PROXY_BASE){
+    expToggle.checked=false; expToggle.disabled=true;
+    document.getElementById("expLabel").style.opacity=".55";
+    expSetup.hidden=false;
+  }
 }
 
 function render(){
@@ -291,11 +330,14 @@ function render(){
   if(url){
     urlEl.textContent=url; urlEl.classList.remove("empty");
     copyBtn.disabled=false; subBtn.disabled=false;
-    countEl.innerHTML=`<b>${ids.length}</b> ressource${ids.length>1?"s":""} sélectionnée${ids.length>1?"s":""} · CM de promo inclus`;
+    const plural=ids.length>1;
+    countEl.innerHTML=`<b>${ids.length}</b> ressource${plural?"s":""} sélectionnée${plural?"s":""} · CM de promo inclus`
+      + (expEnabled()?` · <b style="color:var(--warn)">aile R1/R2/R3 activée</b>`:"");
   }else{
     urlEl.textContent="Coche au moins un groupe ci-dessus…"; urlEl.classList.add("empty");
     copyBtn.disabled=true; subBtn.disabled=true; countEl.textContent="";
   }
+  expWarn.hidden = !expEnabled();
   save();
 }
 
@@ -403,7 +445,7 @@ tabBtns.forEach(b=>b.addEventListener("click", ()=>showTab(b.dataset.tab)));
 let initTab="cal"; try{ initTab=localStorage.getItem("calfilter.tab")||"cal"; }catch(e){}
 showTab(initTab);
 
-load(); render();
+load(); setupExp(); render();
 </script>
 </body>
 </html>
