@@ -1,0 +1,87 @@
+name: Mise à jour du calendrier filtré
+
+on:
+  # ┌─────────────────────────────────────────────────────────────────────┐
+  # │  FRÉQUENCE D'ACTUALISATION — une seule ligne à changer.              │
+  # │  '0 * * * *'  = toutes les heures (à la minute 0).                   │
+  # │  '0 */3 * * *'= toutes les 3 h   ·  '0 6 * * *' = tous les jours 6h. │
+  # │  Format cron : minute heure jour-du-mois mois jour-de-semaine (UTC). │
+  # │  Note : GitHub peut retarder les crons de quelques minutes.          │
+  # └─────────────────────────────────────────────────────────────────────┘
+  schedule:
+    - cron: '0 * * * *'
+
+  # Bouton "Run workflow" dans l'onglet Actions (test manuel).
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Profil à utiliser (vide = valeur par défaut)"
+        required: false
+        default: ""
+
+# Évite deux exécutions simultanées.
+concurrency:
+  group: calfilter-update
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      - name: Générer le calendrier filtré
+        env:
+          # Priorité : input du bouton manuel > variable de dépôt > défaut du YAML.
+          CALFILTER_PROFILE: ${{ github.event.inputs.profile || vars.CALFILTER_PROFILE }}
+        run: python -m calfilter --out public/calendar.ics
+
+      - name: Publier dans le Gist
+        if: ${{ vars.GIST_ID != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+        run: |
+          jq -n --rawfile c public/calendar.ics \
+            '{files: {"calendar.ics": {content: $c}}}' \
+            | gh api -X PATCH "/gists/${{ vars.GIST_ID }}" --input -
+          echo "Gist mis à jour : https://gist.github.com/${{ vars.GIST_ID }}"
+
+      - name: Avertir la config du Gist si absente
+        if: ${{ vars.GIST_ID == '' }}
+        run: echo "::warning::GIST_ID non défini — calendrier généré mais pas publié. Voir README."
+
+      # ── En cas d'échec d'une étape ci-dessus : envoi d'un mail ──────────
+      - name: Envoyer un mail en cas d'échec
+        if: ${{ failure() && env.MAIL_SERVER != '' }}
+        env:
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: calFilter <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.MAIL_TO }}
+          subject: "❌ calFilter : la mise à jour du calendrier a échoué"
+          body: |
+            La mise à jour automatique du calendrier filtré a échoué.
+
+            Dépôt   : ${{ github.repository }}
+            Détails : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Causes possibles : flux de la fac indisponible, format changé,
+            aucun cours retenu (seuil min_events), ou erreur de publication du Gist.

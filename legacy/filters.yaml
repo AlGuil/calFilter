@@ -1,0 +1,73 @@
+# =============================================================================
+# calFilter — configuration
+# =============================================================================
+# Seul fichier à modifier. Pas besoin de toucher au code Python.
+#
+# Chaque personne a un "profil" (sous `profiles:`). Un profil se construit en
+# deux temps :
+#
+#   1) resources : la liste des RESSOURCES de la fac à agréger. C'est le tri
+#      principal : chaque ressource "groupe" est un paquet complet et fidèle
+#      (la fac fait le tri). Les CM de promo viennent gratuitement avec.
+#      -> Trouve tes IDs dans docs/RESSOURCES.md.
+#
+#   2) affinage OPTIONNEL (souvent vide) sur les cours ainsi obtenus :
+#        keep_only : si non vide, ne garder QUE les cours matchant une règle.
+#        exclude   : retirer les cours matchant une règle.
+#
+# Conditions d'une règle (toutes en ET ; chaque valeur = chaîne ou liste = OU) :
+#   type / summary_contains / summary_not_contains / group_contains /
+#   group_not_contains / date_from / date_to  (dates au format AAAA-MM-JJ, incluses)
+# Comparaisons insensibles à la casse et aux accents.
+# =============================================================================
+
+# Gabarit d'URL du flux fac. {resources} et {weeks} sont remplis automatiquement.
+source_url_template: "https://edt.uca.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources={resources}&projectId=4&calType=ical&nbWeeks={weeks}&displayConfigId=128"
+
+# Horizon récupéré, en semaines (commun à tous les profils).
+weeks: 8
+
+# Nom affiché dans le calendrier abonné.
+calendar_name: "Fac Pharma — filtré"
+
+# Profil par défaut (surchargé par --profile ou CALFILTER_PROFILE).
+default_profile: alban
+
+# Garde-fou : sous ce nombre de cours gardés, on considère qu'il y a un problème
+# (flux vide, ressources changées) -> erreur -> mail d'alerte. 0 pour désactiver.
+min_events: 1
+
+profiles:
+
+  # ---------------------------------------------------------------------------
+  alban:
+    description: "Remise à niveau gr.2 (50942) + TP gr.3 (4125) + ED gr.B (9077). CM de promo inclus."
+    resources:
+      - 50942   # Remise à niveau, groupe 2 (CM + TD UE11 + ED UE12 + CC)
+      - 4125    # TP groupe 3
+      - 9077    # ED groupe B (UE régulières)
+
+    # Rien à retirer pour l'instant : on garde tout ce que renvoient les ressources.
+    keep_only: []
+    exclude: []
+
+    # Exemples d'affinage (décommenter et adapter au besoin) :
+    #
+    # exclude:
+    #   - name: "Sauter la semaine de vacances"
+    #     date_from: "2026-11-02"
+    #     date_to:   "2026-11-08"
+    #   - name: "Je ne prends pas l'option Herbier"
+    #     summary_contains: "HERBIER"
+
+  # ---------------------------------------------------------------------------
+  # Modèle pour un ami : copier ce bloc, le renommer, mettre SES ressources
+  # (voir docs/RESSOURCES.md), puis pointer CALFILTER_PROFILE dessus.
+  exemple:
+    description: "Profil d'exemple — à personnaliser"
+    resources:
+      - 4029    # 4029 = TOUT (promo complète). Combine avec keep_only ci-dessous
+    keep_only:
+      - name: "Ne garder que les CM de promo"
+        group_contains: "PHI 2 DFGSP 2"
+    exclude: []

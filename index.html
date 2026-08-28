@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>calFilter — mon emploi du temps</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#ffffff; --ink:#1c2030; --muted:#5b6072;
+    --line:#e4e7f0; --accent:#5b53e0; --accent-ink:#ffffff;
+    --accent-soft:#eceafd; --ok:#0f9d6b; --warn:#b26a00; --warn-soft:#fff4e0;
+    --radius:14px; --shadow:0 1px 2px rgba(20,22,40,.05),0 8px 24px rgba(20,22,40,.06);
+  }
+  :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1117; --card:#171a23; --ink:#e8eaf2; --muted:#9aa0b4;
+      --line:#262b39; --accent:#8b83ff; --accent-ink:#0f1117;
+      --accent-soft:#20223a; --ok:#3ad29f; --warn:#e0a44a; --warn-soft:#2a2313;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1117; --card:#171a23; --ink:#e8eaf2; --muted:#9aa0b4;
+    --line:#262b39; --accent:#8b83ff; --accent-ink:#0f1117;
+    --accent-soft:#20223a; --ok:#3ad29f; --warn:#e0a44a; --warn-soft:#2a2313;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:28px 20px 64px}
+  header h1{font-size:1.7rem; margin:0 0 6px; letter-spacing:-.02em}
+  header p{margin:0; color:var(--muted)}
+  .banner{
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--accent-soft); border:1px solid var(--line);
+    border-radius:var(--radius); padding:12px 14px; margin:20px 0; font-size:.92rem;
+  }
+  .banner b{color:var(--ink)}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:18px; margin:16px 0;
+  }
+  .card > h2{font-size:1.02rem; margin:0 0 3px}
+  .card > .hint{color:var(--muted); font-size:.86rem; margin:0 0 14px}
+  .opts{display:flex; flex-wrap:wrap; gap:10px}
+  .opt{
+    position:relative; border:1px solid var(--line); border-radius:11px;
+    padding:10px 14px; cursor:pointer; user-select:none; transition:.12s;
+    display:flex; align-items:center; gap:9px; min-width:96px; background:var(--card);
+  }
+  .opt:hover{border-color:var(--accent)}
+  .opt input{position:absolute; opacity:0; pointer-events:none}
+  .opt .dot{
+    width:18px; height:18px; border-radius:50%; border:2px solid var(--line);
+    flex:0 0 auto; display:grid; place-items:center; transition:.12s;
+  }
+  .opt .dot.sq{border-radius:6px}
+  .opt input:checked + .dot{border-color:var(--accent); background:var(--accent)}
+  .opt input:checked + .dot::after{content:"✓"; color:var(--accent-ink); font-size:.72rem; font-weight:700}
+  .opt input:checked ~ .lbl{color:var(--ink); font-weight:600}
+  .opt:has(input:checked){border-color:var(--accent); background:var(--accent-soft)}
+  .lbl{font-size:.94rem; color:var(--muted)}
+  .lbl small{display:block; font-weight:400; color:var(--muted); font-size:.76rem}
+  details.adv{margin-top:16px}
+  details.adv summary{cursor:pointer; color:var(--muted); font-size:.9rem; padding:6px 0}
+  .row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:10px}
+  select{
+    background:var(--card); color:var(--ink); border:1px solid var(--line);
+    border-radius:9px; padding:8px 10px; font-size:.92rem;
+  }
+  /* Sortie */
+  #output.card{border-color:var(--accent)}
+  .url{
+    width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px;
+    padding:11px 12px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:.8rem; color:var(--ink); word-break:break-all; min-height:44px;
+  }
+  .url.empty{color:var(--muted)}
+  .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+  button.btn{
+    border:0; border-radius:10px; padding:11px 16px; font-size:.92rem; font-weight:600;
+    cursor:pointer; transition:.12s;
+  }
+  .btn.primary{background:var(--accent); color:var(--accent-ink)}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--accent)}
+  .btn:disabled{opacity:.45; cursor:not-allowed}
+  .count{font-size:.85rem; color:var(--muted); margin-top:10px}
+  .count b{color:var(--ok)}
+  .how{font-size:.86rem; color:var(--muted); margin-top:14px; border-top:1px solid var(--line); padding-top:12px}
+  .how b{color:var(--ink)}
+  .how code{background:var(--bg); border:1px solid var(--line); border-radius:5px; padding:1px 5px; font-size:.82em}
+  footer{color:var(--muted); font-size:.8rem; margin-top:28px; text-align:center}
+  footer a{color:var(--accent)}
+  /* Répertoire des salles */
+  #roomSearch{
+    width:100%; background:var(--bg); color:var(--ink); border:1px solid var(--line);
+    border-radius:10px; padding:11px 12px; font-size:.95rem; margin-bottom:12px;
+  }
+  .tablewrap{overflow-x:auto}
+  table.rooms{width:100%; border-collapse:collapse; font-size:.9rem}
+  table.rooms th,table.rooms td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); white-space:nowrap}
+  table.rooms th{color:var(--muted); font-weight:600; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em}
+  table.rooms td.repere{white-space:normal; color:var(--muted)}
+  .aile{display:inline-block; background:var(--accent-soft); color:var(--accent); border-radius:6px; padding:1px 7px; font-weight:700; font-size:.82rem}
+  .aile.none{background:transparent; color:var(--muted); font-weight:400}
+  .nomatch{color:var(--muted); padding:12px 2px}
+  .legend{color:var(--muted); font-size:.8rem; margin-top:10px}
+  .toggle-theme{
+    position:fixed; top:14px; right:14px; background:var(--card); border:1px solid var(--line);
+    border-radius:9px; width:38px; height:38px; cursor:pointer; font-size:1.05rem; color:var(--ink);
+  }
+  /* Onglets */
+  .tabs{display:flex; gap:4px; margin:20px 0 6px; border-bottom:1px solid var(--line)}
+  .tab{background:transparent; border:0; border-bottom:2px solid transparent; padding:10px 16px;
+    font-size:.98rem; font-weight:600; color:var(--muted); cursor:pointer; margin-bottom:-1px}
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:var(--accent); border-bottom-color:var(--accent)}
+  .tabpane[hidden]{display:none}
+  /* Plan dépliable */
+  details.planwrap{margin-top:16px}
+  details.planwrap > summary{cursor:pointer; color:var(--accent); font-weight:600; padding:8px 0}
+  .planwrap img{width:100%; border:1px solid var(--line); border-radius:10px; margin-top:10px; display:block}
+  @media(max-width:520px){ .opt{flex:1 1 calc(50% - 5px); min-width:0} }
+</style>
+</head>
+<body>
+<button class="toggle-theme" id="themeBtn" title="Thème clair / sombre" aria-label="Changer de thème">◐</button>
+<div class="wrap">
+  <header>
+    <h1>Mon emploi du temps</h1>
+    <p>Ton calendrier de fac filtré (mis à jour tout seul) &amp; où trouver chaque salle.</p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="cal" role="tab">📅 Calendrier</button>
+    <button class="tab" data-tab="rooms" role="tab">📍 Salles</button>
+  </nav>
+
+  <section id="tab-cal" class="tabpane" role="tabpanel">
+  <div class="banner">
+    <span aria-hidden="true">💡</span>
+    <div>Les <b>cours magistraux communs de la promo</b> (CM « PHI 2 DFGSP 2 ») sont
+    inclus automatiquement dès que tu coches au moins un groupe. Pas besoin de les
+    sélectionner. Le calendrier est celui de la fac : <b>elle s'occupe des mises à jour</b>,
+    ton agenda se resynchronise tout seul.</div>
+  </div>
+
+  <div id="sections"></div>
+
+  <details class="adv">
+    <summary>Options avancées</summary>
+    <div class="card" style="margin-top:10px">
+      <div class="row">
+        <label for="weeks">Horizon affiché&nbsp;:</label>
+        <select id="weeks">
+          <option value="8">8 semaines</option>
+          <option value="16">16 semaines</option>
+          <option value="26">26 semaines (~1 semestre)</option>
+          <option value="52" selected>52 semaines (année entière — recommandé)</option>
+        </select>
+        <span class="lbl" style="flex:1; min-width:180px">Fenêtre glissante à partir d'aujourd'hui&nbsp;: un seul abonnement couvre l'année et intègre le S2 dès que la fac le publie.</span>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <label class="opt" style="min-width:0">
+          <input type="checkbox" id="cmOnly" data-id="4321">
+          <span class="dot sq"></span>
+          <span class="lbl">Ajouter les CM de promo seuls<small>utile si tu ne coches aucun groupe</small></span>
+        </label>
+      </div>
+    </div>
+  </details>
+
+  <div class="card" id="output">
+    <h2>Ton lien de calendrier</h2>
+    <p class="hint">À ajouter comme calendrier <b>par abonnement</b> (pas un import ponctuel).</p>
+    <div class="url empty" id="url">Coche au moins un groupe ci-dessus…</div>
+    <div class="count" id="count"></div>
+    <div class="actions">
+      <button class="btn primary" id="copyBtn" disabled>Copier le lien</button>
+      <button class="btn ghost" id="subBtn" disabled>S'abonner (webcal)</button>
+      <button class="btn ghost" id="resetBtn">Tout décocher</button>
+    </div>
+    <div class="how">
+      <b>Google Agenda</b> : Autres agendas → <i>À partir de l'URL</i> → colle le lien.<br>
+      <b>Apple / iPhone</b> : le bouton « S'abonner » ouvre la fenêtre d'abonnement.<br>
+      <b>Outlook</b> : Ajouter un calendrier → <i>S'abonner à partir du web</i>.
+    </div>
+  </div>
+  </section>
+
+  <section id="tab-rooms" class="tabpane" role="tabpanel" hidden>
+  <div class="card" id="rooms">
+    <h2>📍 Où sont les salles&nbsp;?</h2>
+    <p class="hint">Le calendrier officiel n'indique que le nom court de la salle. Ici, où la trouver dans le bâtiment.</p>
+    <input type="search" id="roomSearch" placeholder="Cherche une salle… (ex. « 2B », « 505 », « amphi »)" autocomplete="off">
+    <div class="tablewrap">
+      <table class="rooms">
+        <thead><tr><th>Salle</th><th>Étage</th><th>Aile</th><th>Repère</th></tr></thead>
+        <tbody id="roomBody"></tbody>
+      </table>
+    </div>
+    <p class="legend"><b>R1 · R2 · R3</b> = les trois ailes (escaliers &amp; ascenseurs). L'aile n'est indiquée
+    que lorsqu'elle figure au plan officiel&nbsp;; l'étage se déduit du numéro de salle. Source&nbsp;: plan UCA 2021 — à vérifier si un bâtiment change.</p>
+
+    <details class="planwrap">
+      <summary>Voir le plan complet de la fac</summary>
+      <p class="legend"><a href="plan-salles.pdf" target="_blank" rel="noopener">⤢ Ouvrir le plan en grand (PDF)</a> · Plan officiel UCA 2021.</p>
+      <img src="assets/plan-1.png" alt="Plan de la fac — RDC, 1er et 2e étage" loading="lazy">
+      <img src="assets/plan-2.png" alt="Plan de la fac — 3e à 6e étage" loading="lazy">
+    </details>
+  </div>
+  </section>
+
+  <footer>
+    IDs de ressources relevés pour la promo <b>DFGSP 2 (2026-2027)</b>.
+    Options marquées « à vérifier » : confirme auprès du secrétariat.<br>
+    Si la fac renumérote ses ressources, régénère la liste avec
+    <code>scripts/probe_resources.py</code>. Aucun serveur, aucune donnée collectée.
+  </footer>
+</div>
+
+<script>
+const BASE = "https://edt.uca.fr/jsp/custom/modules/plannings/anonymous_cal.jsp";
+const FIXED = "projectId=4&calType=ical&displayConfigId=128";
+const LS_KEY = "calfilter.selection.v1";
+
+// Ressources de la promo DFGSP2, relevées empiriquement (voir docs/RESSOURCES.md).
+const SECTIONS = [
+  { title:"Travaux pratiques (TP)", hint:"Ton groupe de TP.", items:[
+    {id:"4114",label:"Groupe 1"},{id:"4116",label:"Groupe 2"},{id:"4125",label:"Groupe 3"},
+    {id:"4127",label:"Groupe 4"},{id:"5644",label:"Groupe 5"} ]},
+  { title:"Enseignements dirigés (ED / TD)", hint:"Ton groupe d'ED des UE régulières.", items:[
+    {id:"9078",label:"Groupe A"},{id:"9077",label:"Groupe B"},{id:"9079",label:"Groupe C"} ]},
+  { title:"Remise à niveau", hint:"CM + TD (UE 11) + ED (UE 12) + partiels, selon ton groupe.", items:[
+    {id:"50941",label:"Groupe 1"},{id:"50942",label:"Groupe 2"} ]},
+  { title:"Options / UE au choix", hint:"À vérifier selon ton inscription.", items:[
+    {id:"6126",label:"Risque A.V.F."},{id:"6127",label:"Physiologie"},
+    {id:"6130",label:"Endocrinologie"},{id:"6139",label:"Herbier"} ]},
+];
+
+// Rendu des sections
+const container = document.getElementById("sections");
+SECTIONS.forEach(sec=>{
+  const card=document.createElement("div"); card.className="card";
+  card.innerHTML=`<h2>${sec.title}</h2><p class="hint">${sec.hint}</p>`;
+  const opts=document.createElement("div"); opts.className="opts";
+  sec.items.forEach(it=>{
+    const l=document.createElement("label"); l.className="opt";
+    l.innerHTML=`<input type="checkbox" data-id="${it.id}"><span class="dot sq"></span><span class="lbl">${it.label}</span>`;
+    opts.appendChild(l);
+  });
+  card.appendChild(opts); container.appendChild(card);
+});
+
+const urlEl=document.getElementById("url");
+const countEl=document.getElementById("count");
+const copyBtn=document.getElementById("copyBtn");
+const subBtn=document.getElementById("subBtn");
+const weeksEl=document.getElementById("weeks");
+const boxes=()=>[...document.querySelectorAll('input[type=checkbox][data-id]')];
+
+function selectedIds(){ return boxes().filter(b=>b.checked).map(b=>b.dataset.id); }
+
+function currentUrl(){
+  const ids=selectedIds();
+  if(!ids.length) return "";
+  return `${BASE}?resources=${ids.join(",")}&${FIXED}&nbWeeks=${weeksEl.value}`;
+}
+
+function save(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify({ids:selectedIds(),weeks:weeksEl.value})); }catch(e){}
+}
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(LS_KEY)||"{}");
+    if(s.weeks) weeksEl.value=s.weeks;
+    if(Array.isArray(s.ids)) boxes().forEach(b=>{ if(s.ids.includes(b.dataset.id)) b.checked=true; });
+  }catch(e){}
+}
+
+function render(){
+  const url=currentUrl();
+  const ids=selectedIds();
+  if(url){
+    urlEl.textContent=url; urlEl.classList.remove("empty");
+    copyBtn.disabled=false; subBtn.disabled=false;
+    countEl.innerHTML=`<b>${ids.length}</b> ressource${ids.length>1?"s":""} sélectionnée${ids.length>1?"s":""} · CM de promo inclus`;
+  }else{
+    urlEl.textContent="Coche au moins un groupe ci-dessus…"; urlEl.classList.add("empty");
+    copyBtn.disabled=true; subBtn.disabled=true; countEl.textContent="";
+  }
+  save();
+}
+
+document.addEventListener("change", e=>{ if(e.target.matches('input[type=checkbox],select')) render(); });
+
+copyBtn.addEventListener("click", async ()=>{
+  const url=currentUrl(); if(!url) return;
+  try{ await navigator.clipboard.writeText(url); flash(copyBtn,"Copié ✓"); }
+  catch(e){
+    const t=document.createElement("textarea"); t.value=url; document.body.appendChild(t);
+    t.select(); try{document.execCommand("copy"); flash(copyBtn,"Copié ✓");}catch(_){flash(copyBtn,"Sélectionne et copie");}
+    t.remove();
+  }
+});
+subBtn.addEventListener("click", ()=>{
+  const url=currentUrl(); if(!url) return;
+  window.location.href = url.replace(/^https?:\/\//,"webcal://");
+});
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  boxes().forEach(b=>b.checked=false); render();
+});
+function flash(btn,txt){ const o=btn.textContent; btn.textContent=txt; setTimeout(()=>btn.textContent=o,1400); }
+
+// Thème
+const themeBtn=document.getElementById("themeBtn");
+function applyTheme(t){ if(t) document.documentElement.setAttribute("data-theme",t); else document.documentElement.removeAttribute("data-theme"); }
+try{ applyTheme(localStorage.getItem("calfilter.theme")); }catch(e){}
+themeBtn.addEventListener("click", ()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  const isDark = cur ? cur==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const next=isDark?"light":"dark"; applyTheme(next);
+  try{ localStorage.setItem("calfilter.theme",next); }catch(e){}
+});
+
+// Répertoire des salles — [nom, étage, aile, repère]. Aile connue = figure au plan UCA 2021.
+const ROOMS = [
+  ["Amphi 1","1er","R1","Puy de la Nugère"],
+  ["Amphi 4","1er","R2","Puy de Pariou"],
+  ["Amphi 5","1er","R3","Puy Mary"],
+  ["Amphi 2A","3e","R1","Puy de Jume"],
+  ["Amphi 6A","3e","R3","Puy Petit Sarcouy"],
+  ["Amphi 2B","4e","R1","Puy de coquille"],
+  ["Amphi 6B","4e","R3","Puy grand Sarcouy"],
+  ["Amphi 3","5e","R1","Puy de Côme"],
+  ["Amphi Volcans (B)","RDC","","Accès CRBC (côté R3)"],
+  ["Auditorium","RDC","","Aile ouest, près du CROUS"],
+  ["Salle 002","RDC","R1",""],
+  ["Salle 005 (CRBC)","RDC","","Bloc santé / CRBC"],
+  ["Salle 040","RDC","R1",""],
+  ["Salle 042","RDC","R2",""],
+  ["Salle 126","1er","R1",""],
+  ["Salle 127","1er","R1",""],
+  ["Salle 203","2e","",""],
+  ["Salle 205","2e","R1",""],
+  ["Salle 223","2e","R1","SPEECH"],
+  ["Salle 224","2e","","SPEECH"],
+  ["Salle 225","2e","","SPEECH"],
+  ["Salle 226","2e","","SPEECH"],
+  ["Salle 227","2e","","SPEECH"],
+  ["Salle 228","2e","","SPEECH"],
+  ["Salle 234","2e","",""],
+  ["Salle 236","2e","",""],
+  ["Salle 237","2e","",""],
+  ["Salle 243","2e","R2",""],
+  ["Salle 244","2e","R2","Salle info"],
+  ["Salle 245","2e","R2",""],
+  ["Salle 246","2e","R2",""],
+  ["Salle 262","2e","R3",""],
+  ["Salle 305","3e","","TP Chimie"],
+  ["Salle 326","3e","","TP Chimie"],
+  ["Salle 330-342","3e","","TP Bactério/immuno/hémato/parasito"],
+  ["Salle 345","3e","","TP Bactério/immuno/hémato/parasito"],
+  ["Salle 431","4e","","TP Pharmaco-physiologie"],
+  ["Salle 449","4e","","TP Biochimie"],
+  ["Salle 501","5e","","TP Physio-pharmaco"],
+  ["Salle 502","5e","","TP Physio-pharmaco"],
+  ["Salle 505","5e","",""],
+  ["Salle 527","5e","","TP Biophysique"],
+  ["Salle 532","5e","R2",""],
+  ["Salle 547","5e","R2","Visioconférence"],
+];
+const roomBody=document.getElementById("roomBody");
+const roomSearch=document.getElementById("roomSearch");
+function norm(s){ return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
+function renderRooms(q=""){
+  const nq=norm(q.trim());
+  const rows=ROOMS.filter(r=> !nq || norm(r.join(" ")).includes(nq));
+  if(!rows.length){ roomBody.innerHTML=`<tr><td colspan="4" class="nomatch">Aucune salle trouvée. Vérifie l'orthographe ou consulte le plan de la fac.</td></tr>`; return; }
+  roomBody.innerHTML=rows.map(([n,e,a,rep])=>
+    `<tr><td><b>${n}</b></td><td>${e}</td><td>${a?`<span class="aile">${a}</span>`:'<span class="aile none">—</span>'}</td><td class="repere">${rep||""}</td></tr>`
+  ).join("");
+}
+roomSearch.addEventListener("input", ()=>renderRooms(roomSearch.value));
+renderRooms();
+
+// Onglets
+const tabBtns=[...document.querySelectorAll(".tab")];
+function showTab(name){
+  tabBtns.forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+  document.getElementById("tab-cal").hidden   = name!=="cal";
+  document.getElementById("tab-rooms").hidden = name!=="rooms";
+  try{ localStorage.setItem("calfilter.tab", name); }catch(e){}
+}
+tabBtns.forEach(b=>b.addEventListener("click", ()=>showTab(b.dataset.tab)));
+let initTab="cal"; try{ initTab=localStorage.getItem("calfilter.tab")||"cal"; }catch(e){}
+showTab(initTab);
+
+load(); render();
+</script>
+</body>
+</html>

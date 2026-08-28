@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# calFilter — calendrier généré localement (publié via Gist, pas commité)
+public/
+*.ics
