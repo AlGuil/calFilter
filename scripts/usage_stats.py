@@ -35,9 +35,29 @@ import argparse
 import json
 import os
 import sys
+import urllib.error
 import urllib.request
+from pathlib import Path
 
 API = "https://api.cloudflare.com/client/v4/accounts/{acct}/analytics_engine/sql"
+
+
+def local_creds() -> dict[str, str]:
+    """Lit les identifiants depuis un fichier local `.cf_usage.env` (ignoré par
+    git), au format KEY=VALUE. Cherché à côté du script puis à la racine du dépôt.
+    Permet de lancer `python scripts/usage_stats.py` sans exporter de variables."""
+    here = Path(__file__).resolve().parent
+    out: dict[str, str] = {}
+    for path in (here / ".cf_usage.env", here.parent / ".cf_usage.env"):
+        if path.is_file():
+            for line in path.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                out[k.strip()] = v.strip()
+            break
+    return out
 
 
 def run_sql(acct: str, token: str, sql: str) -> list[dict]:
@@ -58,13 +78,19 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--days", type=int, default=7, help="Fenêtre en jours (défaut 7)")
     ap.add_argument("--dataset", default="calfilter_usage", help="Nom du dataset AE")
     ap.add_argument("--top", type=int, default=10, help="Nb de combinaisons à lister")
-    ap.add_argument("--account", default=os.environ.get("CF_ACCOUNT_ID"))
-    ap.add_argument("--token", default=os.environ.get("CF_API_TOKEN"))
+    ap.add_argument("--account")
+    ap.add_argument("--token")
     args = ap.parse_args(argv)
 
-    if not args.account or not args.token:
-        print("Renseigne CF_ACCOUNT_ID et CF_API_TOKEN (env ou --account/--token).",
-              file=sys.stderr)
+    # Priorité : --account/--token > variables d'env > fichier local .cf_usage.env
+    creds = local_creds()
+    account = args.account or os.environ.get("CF_ACCOUNT_ID") or creds.get("CF_ACCOUNT_ID")
+    token = args.token or os.environ.get("CF_API_TOKEN") or creds.get("CF_API_TOKEN")
+
+    if not account or not token:
+        print("Identifiants manquants. Renseigne-les via --account/--token, les",
+              "variables CF_ACCOUNT_ID / CF_API_TOKEN, ou le fichier local",
+              "scripts/.cf_usage.env (KEY=VALUE, ignoré par git).", file=sys.stderr)
         return 2
 
     # Une ligne par sélection distincte (blob1=hash, blob2=ressources), pondérée
@@ -80,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
         "LIMIT 10000"
     )
     try:
-        rows = run_sql(args.account, args.token, sql)
+        rows = run_sql(account, token, sql)
     except urllib.error.HTTPError as e:
         print(f"Erreur API ({e.code}) : {e.read().decode('utf-8','replace')[:300]}",
               file=sys.stderr)

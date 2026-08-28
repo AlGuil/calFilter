@@ -220,3 +220,7 @@ __marimo__/
 # calFilter — calendrier généré localement (publié via Gist, pas commité)
 public/
 *.ics
+
+# calFilter — identifiants Cloudflare pour usage_stats.py (JAMAIS commités)
+.cf_usage.env
+scripts/.cf_usage.env
