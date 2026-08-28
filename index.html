@@ -154,10 +154,21 @@
   <section id="tab-cal" class="tabpane" role="tabpanel">
   <div class="banner">
     <span aria-hidden="true">💡</span>
-    <div>Les <b>cours magistraux communs de la promo</b> (CM « PHI 2 DFGSP 2 ») sont
+    <div>Les <b>cours magistraux communs de la promo</b> (CM « <span id="cmName">PHI 2 DFGSP 2</span> ») sont
     inclus automatiquement dès que tu coches au moins un groupe. Pas besoin de les
     sélectionner. Le calendrier est celui de la fac : <b>elle s'occupe des mises à jour</b>,
     ton agenda se resynchronise tout seul.</div>
+  </div>
+
+  <div class="card promo-card">
+    <div class="row">
+      <label for="promo"><b>Ta promo&nbsp;:</b></label>
+      <select id="promo">
+        <option value="2">2ᵉ année — DFGSP 2</option>
+        <option value="3">3ᵉ année — DFGSP 3</option>
+      </select>
+      <span class="lbl" style="flex:1; min-width:170px">Change les groupes proposés ci-dessous. Le lien produit reste unique et partageable.</span>
+    </div>
   </div>
 
   <div id="sections"></div>
@@ -240,8 +251,8 @@
   </section>
 
   <footer>
-    IDs de ressources relevés pour la promo <b>DFGSP 2 (2026-2027)</b>.
-    Options marquées « à vérifier » : confirme auprès du secrétariat.<br>
+    IDs de ressources relevés pour les promos <b>DFGSP 2</b> et <b>DFGSP 3</b> (2026-2027).
+    Groupes 3e année non étiquetés par la fac : vérifie que les dates correspondent à ton groupe.<br>
     Si la fac renumérote ses ressources, régénère la liste avec
     <code>scripts/probe_resources.py</code>. Aucun serveur, aucune donnée collectée.
   </footer>
@@ -256,33 +267,68 @@ const LS_KEY = "calfilter.selection.v1";
 // Laisse "" tant qu'il n'est pas déployé — l'option restera désactivée.
 const PROXY_BASE = "https://flat-bar-2b09.aguilhot.workers.dev";
 
-// Ressources de la promo DFGSP2, relevées empiriquement (voir docs/RESSOURCES.md).
-const SECTIONS = [
-  { title:"Travaux pratiques (TP)", hint:"Ton groupe de TP.", items:[
-    {id:"4114",label:"Groupe 1"},{id:"4116",label:"Groupe 2"},{id:"4125",label:"Groupe 3"},
-    {id:"4127",label:"Groupe 4"},{id:"5644",label:"Groupe 5"} ]},
-  { title:"Enseignements dirigés (ED / TD)", hint:"Ton groupe d'ED des UE régulières.", items:[
-    {id:"9078",label:"Groupe A"},{id:"9077",label:"Groupe B"},{id:"9079",label:"Groupe C"} ]},
-  { title:"Remise à niveau", hint:"CM + TD (UE 11) + ED (UE 12) + partiels, selon ton groupe.", items:[
-    {id:"50941",label:"Groupe 1"},{id:"50942",label:"Groupe 2"} ]},
-  { title:"Options / UE au choix", hint:"À vérifier selon ton inscription.", items:[
-    {id:"6126",label:"Risque A.V.F."},{id:"6127",label:"Physiologie"},
-    {id:"6130",label:"Endocrinologie"},{id:"6139",label:"Herbier"} ]},
-];
+// Ressources par promo, relevées empiriquement en sondant chaque ressource
+// isolément (voir docs/RESSOURCES.md). Un item peut porter plusieurs ressources
+// séparées par une virgule (ex. TP + Anglais du même groupe) ; l'URL les combine
+// et la fac dédoublonne les CM communs par UID.
+const PROMOS = {
+  "2": {
+    cm: "4321",             // ressource « CM de promo seuls »
+    cmName: "PHI 2 DFGSP 2",
+    sections: [
+      { title:"Travaux pratiques (TP)", hint:"Ton groupe de TP.", items:[
+        {id:"4114",label:"Groupe 1"},{id:"4116",label:"Groupe 2"},{id:"4125",label:"Groupe 3"},
+        {id:"4127",label:"Groupe 4"},{id:"5644",label:"Groupe 5"} ]},
+      { title:"Enseignements dirigés (ED / TD)", hint:"Ton groupe d'ED des UE régulières.", items:[
+        {id:"9078",label:"Groupe A"},{id:"9077",label:"Groupe B"},{id:"9079",label:"Groupe C"} ]},
+      { title:"Remise à niveau", hint:"CM + TD (UE 11) + ED (UE 12) + partiels, selon ton groupe.", items:[
+        {id:"50941",label:"Groupe 1"},{id:"50942",label:"Groupe 2"} ]},
+      { title:"Options / UE au choix", hint:"À vérifier selon ton inscription.", items:[
+        {id:"6126",label:"Risque A.V.F."},{id:"6127",label:"Physiologie"},
+        {id:"6130",label:"Endocrinologie"},{id:"6139",label:"Herbier"} ]},
+    ],
+  },
+  "3": {
+    cm: "46006",            // ressource ne portant que les CM de promo DFGSP3
+    cmName: "PHI 3 DFGSP 3",
+    sections: [
+      { title:"Travaux pratiques (TP)", hint:"Ton groupe de TP (l'anglais du même numéro est inclus). La fac ne met plus le n° de groupe dans le flux&nbsp;: vérifie que les dates correspondent à ton groupe. Les groupes 1 et 2 incluent les TP d'officine.", items:[
+        {id:"45999,8172",label:"Groupe 1"},{id:"46000,8171",label:"Groupe 2"},
+        {id:"46001,8169",label:"Groupe 3"},{id:"46002,7847",label:"Groupe 4"},
+        {id:"46003,8197",label:"Groupe 5"} ]},
+      { title:"Enseignements dirigés (ED / TD)", hint:"Ton groupe d'ED. Non étiqueté par la fac dans le flux — vérifie tes dates.", items:[
+        {id:"9084",label:"Groupe A"},{id:"9085",label:"Groupe B"},{id:"9086",label:"Groupe C"} ]},
+      { title:"Parcours (filière)", hint:"Ta filière de 3e année, en plus du tronc commun.", items:[
+        {id:"",label:"Officine",sub:"TP déjà inclus dans les groupes 1–2"},
+        {id:"63702",label:"Industrie",sub:"UE 14 Procédés Industriels"},
+        {id:"6415",label:"Internat",sub:"UE 15"} ]},
+    ],
+  },
+};
 
-// Rendu des sections
+// Rendu des sections de la promo courante
 const container = document.getElementById("sections");
-SECTIONS.forEach(sec=>{
-  const card=document.createElement("div"); card.className="card";
-  card.innerHTML=`<h2>${sec.title}</h2><p class="hint">${sec.hint}</p>`;
-  const opts=document.createElement("div"); opts.className="opts";
-  sec.items.forEach(it=>{
-    const l=document.createElement("label"); l.className="opt";
-    l.innerHTML=`<input type="checkbox" data-id="${it.id}"><span class="dot sq"></span><span class="lbl">${it.label}</span>`;
-    opts.appendChild(l);
+const promoEl = document.getElementById("promo");
+const cmNameEl = document.getElementById("cmName");
+let currentPromo = "2";
+function renderSections(){
+  const P = PROMOS[currentPromo] || PROMOS["2"];
+  container.innerHTML = "";
+  P.sections.forEach(sec=>{
+    const card=document.createElement("div"); card.className="card";
+    card.innerHTML=`<h2>${sec.title}</h2><p class="hint">${sec.hint}</p>`;
+    const opts=document.createElement("div"); opts.className="opts";
+    sec.items.forEach(it=>{
+      const l=document.createElement("label"); l.className="opt";
+      const sub = it.sub ? `<small>${it.sub}</small>` : "";
+      l.innerHTML=`<input type="checkbox" data-id="${it.id}"><span class="dot sq"></span><span class="lbl">${it.label}${sub}</span>`;
+      opts.appendChild(l);
+    });
+    card.appendChild(opts); container.appendChild(card);
   });
-  card.appendChild(opts); container.appendChild(card);
-});
+  cmOnly.dataset.id = P.cm;          // « CM de promo seuls » dépend de la promo
+  if(cmNameEl) cmNameEl.textContent = P.cmName;
+}
 
 const urlEl=document.getElementById("url");
 const countEl=document.getElementById("count");
@@ -292,9 +338,16 @@ const weeksEl=document.getElementById("weeks");
 const expToggle=document.getElementById("expToggle");
 const expWarn=document.getElementById("expWarn");
 const expSetup=document.getElementById("expSetup");
+const cmOnly=document.getElementById("cmOnly");
 const boxes=()=>[...document.querySelectorAll('input[type=checkbox][data-id]')];
+const sectionBoxes=()=>boxes().filter(b=>b!==cmOnly);
 
-function selectedIds(){ return boxes().filter(b=>b.checked).map(b=>b.dataset.id); }
+// Un item peut porter plusieurs ressources ("45999,8172") ; on aplatit et on
+// dédoublonne. Un item sans ressource (officine, id="") ne contribue rien.
+function selectedIds(){
+  const raw=boxes().filter(b=>b.checked).flatMap(b=>b.dataset.id.split(","));
+  return [...new Set(raw.map(s=>s.trim()).filter(Boolean))];
+}
 function expEnabled(){ return !!PROXY_BASE && expToggle.checked; }
 
 function currentUrl(){
@@ -306,16 +359,29 @@ function currentUrl(){
 }
 
 function save(){
-  try{ localStorage.setItem(LS_KEY, JSON.stringify({ids:selectedIds(),weeks:weeksEl.value,exp:expToggle.checked})); }catch(e){}
+  try{ localStorage.setItem(LS_KEY, JSON.stringify({
+    promo:currentPromo,
+    ids:sectionBoxes().filter(b=>b.checked).map(b=>b.dataset.id),
+    cm:cmOnly.checked, weeks:weeksEl.value, exp:expToggle.checked
+  })); }catch(e){}
 }
 function load(){
-  try{
-    const s=JSON.parse(localStorage.getItem(LS_KEY)||"{}");
-    if(s.weeks) weeksEl.value=s.weeks;
-    if(Array.isArray(s.ids)) boxes().forEach(b=>{ if(s.ids.includes(b.dataset.id)) b.checked=true; });
-    if(s.exp) expToggle.checked=true;
-  }catch(e){}
+  let s={};
+  try{ s=JSON.parse(localStorage.getItem(LS_KEY)||"{}"); }catch(e){}
+  if(s.promo && PROMOS[s.promo]) currentPromo=s.promo;
+  promoEl.value=currentPromo;
+  renderSections();                 // construit les cases de la promo courante
+  if(s.weeks) weeksEl.value=s.weeks;
+  if(Array.isArray(s.ids)) sectionBoxes().forEach(b=>{ if(s.ids.includes(b.dataset.id)) b.checked=true; });
+  if(s.cm) cmOnly.checked=true;
+  if(s.exp) expToggle.checked=true;
 }
+// Changer de promo réaffiche les groupes (la sélection précédente est effacée).
+promoEl.addEventListener("change", ()=>{
+  currentPromo=promoEl.value;
+  renderSections();
+  render();
+});
 // Configure l'option expérimentale selon que le proxy est renseigné ou non.
 function setupExp(){
   if(!PROXY_BASE){
@@ -327,12 +393,12 @@ function setupExp(){
 
 function render(){
   const url=currentUrl();
-  const ids=selectedIds();
   if(url){
     urlEl.textContent=url; urlEl.classList.remove("empty");
     copyBtn.disabled=false; subBtn.disabled=false;
-    const plural=ids.length>1;
-    countEl.innerHTML=`<b>${ids.length}</b> ressource${plural?"s":""} sélectionnée${plural?"s":""} · CM de promo inclus`
+    const nsel=boxes().filter(b=>b.checked).length;
+    const plural=nsel>1;
+    countEl.innerHTML=`<b>${nsel}</b> option${plural?"s":""} sélectionnée${plural?"s":""} · CM de promo inclus`
       + (expEnabled()?` · <b style="color:var(--warn)">aile R1/R2/R3 activée</b>`:"");
   }else{
     urlEl.textContent="Coche au moins un groupe ci-dessus…"; urlEl.classList.add("empty");
@@ -387,6 +453,7 @@ let ROOMS = [
   ["Amphi 3","5e","R1","Puy de Côme"],
   ["Amphi Volcans (B)","RDC","","Accès CRBC (côté R3)"],
   ["Auditorium","RDC","","Aile ouest, près du CROUS"],
+  ["Salle 001","RDC","","Officine (TP)"],
   ["Salle 002","RDC","R1",""],
   ["Salle 005 (CRBC)","RDC","","Bloc santé / CRBC"],
   ["Salle 040","RDC","R1",""],
@@ -401,6 +468,7 @@ let ROOMS = [
   ["Salle 226","2e","","SPEECH"],
   ["Salle 227","2e","","SPEECH"],
   ["Salle 228","2e","","SPEECH"],
+  ["Salle 229","2e","","Labo de langues"],
   ["Salle 234","2e","",""],
   ["Salle 236","2e","",""],
   ["Salle 237","2e","",""],
@@ -413,14 +481,17 @@ let ROOMS = [
   ["Salle 326","3e","","TP Chimie"],
   ["Salle 330-342","3e","","TP Bactério/immuno/hémato/parasito"],
   ["Salle 345","3e","","TP Bactério/immuno/hémato/parasito"],
+  ["Salle 346","3e","","Labo de langues"],
   ["Salle 431","4e","","TP Pharmaco-physiologie"],
   ["Salle 449","4e","","TP Biochimie"],
   ["Salle 501","5e","","TP Physio-pharmaco"],
   ["Salle 502","5e","","TP Physio-pharmaco"],
+  ["Salle 503","5e","","TP Physio-pharmaco"],
   ["Salle 505","5e","",""],
   ["Salle 527","5e","","TP Biophysique"],
   ["Salle 532","5e","R2",""],
   ["Salle 547","5e","R2","Visioconférence"],
+  ["Salle 628","6e","","Labo de langues"],
 ];
 const roomBody=document.getElementById("roomBody");
 const roomSearch=document.getElementById("roomSearch");

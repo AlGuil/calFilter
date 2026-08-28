@@ -12,6 +12,7 @@
     {"nom": "Amphi 3", "etage": "5e", "aile": "R1"},
     {"nom": "Amphi Volcans (B)", "etage": "RDC", "aile": ""},
     {"nom": "Auditorium", "etage": "RDC", "aile": ""},
+    {"nom": "Salle 001", "etage": "RDC", "aile": "", "repere": "Officine (TP)"},
     {"nom": "Salle 002", "etage": "RDC", "aile": "R1"},
     {"nom": "Salle 005 (CRBC)", "etage": "RDC", "aile": ""},
     {"nom": "Salle 028", "etage": "RDC", "aile": "R1"},
@@ -28,6 +29,7 @@
     {"nom": "Salle 226", "etage": "2e", "aile": ""},
     {"nom": "Salle 227", "etage": "2e", "aile": ""},
     {"nom": "Salle 228", "etage": "2e", "aile": ""},
+    {"nom": "Salle 229", "etage": "2e", "aile": "", "repere": "Labo de langues"},
     {"nom": "Salle 234", "etage": "2e", "aile": "R2"},
     {"nom": "Salle 236", "etage": "2e", "aile": "R2"},
     {"nom": "Salle 237", "etage": "2e", "aile": "R2"},
@@ -40,13 +42,16 @@
     {"nom": "Salle 326", "etage": "3e", "aile": ""},
     {"nom": "Salle 330-342", "etage": "3e", "aile": ""},
     {"nom": "Salle 345", "etage": "3e", "aile": ""},
+    {"nom": "Salle 346", "etage": "3e", "aile": "", "repere": "Labo de langues"},
     {"nom": "Salle 431", "etage": "4e", "aile": ""},
     {"nom": "Salle 449", "etage": "4e", "aile": ""},
     {"nom": "Salle 501", "etage": "5e", "aile": ""},
     {"nom": "Salle 502", "etage": "5e", "aile": ""},
+    {"nom": "Salle 503", "etage": "5e", "aile": "", "repere": "TP Physio-pharmaco"},
     {"nom": "Salle 505", "etage": "5e", "aile": ""},
     {"nom": "Salle 527", "etage": "5e", "aile": ""},
     {"nom": "Salle 532", "etage": "5e", "aile": "R2"},
-    {"nom": "Salle 547", "etage": "5e", "aile": "R2"}
+    {"nom": "Salle 547", "etage": "5e", "aile": "R2"},
+    {"nom": "Salle 628", "etage": "6e", "aile": "", "repere": "Labo de langues"}
   ]
 }

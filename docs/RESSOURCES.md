@@ -76,9 +76,78 @@ URL correspondante (paramètre `resources=9077,4125,50942`). Vérifié : donne
 **exactement** les cours attendus (superset de 106 + 5 contrôles continus de
 remise à niveau).
 
+## Ressources utiles (promo DFGSP 3)
+
+Sondées de la même façon (chaque `resources=<id>` isolément). **Promo commune :
+`PHI 3 DFGSP 3`** (~98 CM), incluse dans *toutes* les ressources — donc « gratuite »
+comme en 2e année.
+
+> ⚠️ **Différence majeure avec la 2e année :** le flux DFGSP3 **ne met plus le
+> n° de groupe dans la `DESCRIPTION`** des TP/ED (tout est marqué `PHI 3 DFGSP 3`).
+> On sait donc qu'il y a **5 groupes de TP** et **3 groupes d'ED** (5 emplois du
+> temps distincts pour les TP, 3 pour les ED), mais **le flux ne dit pas laquelle
+> des ressources = « Groupe 1 »**. Seuls l'**Anglais** et l'« ED GROUPE TP - UE 11 »
+> portent un `Groupe N` explicite. Les libellés TP (1–5) et ED (A/B/C) du picker
+> sont donc attribués **dans l'ordre des ressources** — d'où la consigne affichée
+> « vérifie que les dates correspondent à ton groupe ».
+
+### Travaux pratiques (TP) — 5 groupes
+| Ressource | Groupe (picker) | Remarque |
+|---|---|---|
+| `45999` | Groupe 1 | inclut les **TP d'officine** (UE 13 PO, Salle 001) |
+| `46000` | Groupe 2 | inclut les **TP d'officine** (UE 13 PO, Salle 001) |
+| `46001` | Groupe 3 | |
+| `46002` | Groupe 4 | |
+| `46003` | Groupe 5 | |
+| `4130` | **Tous** les TP (tous groupes) | |
+
+### Anglais (UE 10) — 5 groupes **étiquetés** par la fac
+| Ressource | Groupe | Couplé au TP (picker) |
+|---|---|---|
+| `8172` | Groupe 1 | + TP Groupe 1 |
+| `8171` | Groupe 2 | + TP Groupe 2 |
+| `8169` | Groupe 3 | + TP Groupe 3 |
+| `7847` | Groupe 4 | + TP Groupe 4 |
+| `8197` | Groupe 5 | + TP Groupe 5 |
+| `6678` | **Tous** les groupes d'Anglais | |
+
+> Le picker suppose *groupe d'Anglais = groupe de TP* : chaque case « TP Groupe N »
+> ajoute donc **la ressource TP + la ressource Anglais** du même numéro
+> (ex. Groupe 3 → `46001,8169`).
+
+### Enseignements dirigés (ED / TD) — 3 groupes (non étiquetés)
+| Ressource | Groupe (picker) |
+|---|---|
+| `9084` | Groupe A |
+| `9085` | Groupe B |
+| `9086` | Groupe C |
+| `6660` | **Tous** les ED (3 groupes) |
+
+Contenu ED/TD : UE 1 Biochimie, UE 2 Physiologie, UE 3 Hémato, UE 6 Chimie
+thérapeutique/Pharmaco, UE 7 Toxico, UE 9 Biopharmacie, UE 12 Numérique en santé.
+
+### Parcours / filière de 3e année
+| Ressource | Parcours | Contenu |
+|---|---|---|
+| *(aucune ressource isolée)* | **Officine** | UE 13 « PO » — **déjà inclus** dans les TP groupes 1 et 2 (`45999`/`46000`). Pas de ressource séparée : le picker le montre pour mémoire, sans ajout. |
+| `63702` | **Industrie** | UE 14 Procédés Industriels (5 ED) |
+| `6415` | **Internat** | UE 15 INTERNAT (2 ED) |
+| `6413` | Industrie **+** Internat | UE 14 + UE 15 combinées |
+
+### Génériques / autres
+| Ressource | Contenu |
+|---|---|
+| `4030` | **TOUT** (promo complète, tous groupes/parcours — 309 évts) |
+| `46006` (et la plupart des IDs de la promo) | **CM de promo seuls** (aucun apport de groupe) — utilisé par le picker pour « Ajouter les CM de promo seuls » |
+| `19`,`20`,`32`,`40`,`42` | Marqueur « ED GROUPE TP - UE 11 » des groupes 1→5 (une séance ; sert à confirmer la numérotation des groupes de TP) |
+
+> **Liste complète des ressources DFGSP3** (relevée depuis l'URL de la fac) : voir
+> la constante `RESOURCES_DFGSP3` dans `scripts/probe_resources.py`.
+
 ## Méthode (reproductible)
 
 Script : `scripts/probe_resources.py` (interroge chaque ID isolément, agrège
 types/groupes/UE). Relancer si la fac renumérote ses ressources d'une année sur
 l'autre. Augmenter `nbWeeks` si une ressource ne renvoie pas assez de cours pour
-être identifiée.
+être identifiée. Les IDs des deux promos sont dans le script (constantes
+`RESOURCES` = DFGSP2 et `RESOURCES_DFGSP3` = DFGSP3).

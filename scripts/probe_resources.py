@@ -40,8 +40,23 @@ RESOURCES = (
 )
 
 
-def resources_from_config() -> list[str]:
-    return list(dict.fromkeys(RESOURCES.split(",")))
+# Liste complète des ressources de la promo DFGSP3 (relevée depuis l'URL fournie
+# par la fac, dédoublonnée). Voir la cartographie dans docs/RESSOURCES.md.
+# Utilisation : --promo 3
+RESOURCES_DFGSP3 = (
+    "48569,48568,48567,48566,48565,48564,48563,48562,48561,48560,30002,29127,"
+    "29009,10662,46006,46005,46004,46003,46002,46001,46000,45999,63702,45469,"
+    "9598,9596,9086,9085,9084,9083,62663,62662,62655,8197,8172,8171,8169,7847,"
+    "61269,61268,61144,7139,7138,7137,7136,6678,6660,6415,6414,6413,4658,4135,"
+    "4133,4130,4030,3916,3910,3909,3908,3877,3875,3874,3873,3872,57314,57313,"
+    "57312,57311,57310,3375,3324,3302,3301,55915,2106,55373,55372,55371,36959,"
+    "62,59,44,42,40,32,20,19,14"
+)
+
+
+def resources_from_config(promo: str = "2") -> list[str]:
+    raw = RESOURCES_DFGSP3 if str(promo) == "3" else RESOURCES
+    return list(dict.fromkeys(raw.split(",")))
 
 
 def unfold(txt: str) -> list[str]:
@@ -87,13 +102,15 @@ def ctype(summary: str) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--weeks", type=int, default=26)
+    ap.add_argument("--promo", default="2", choices=["2", "3"],
+                    help="Promo à sonder : 2 (DFGSP2, défaut) ou 3 (DFGSP3)")
     ap.add_argument("--json", help="Écrire le détail JSON dans ce fichier")
     ap.add_argument("--sleep", type=float, default=0.25, help="Pause entre requêtes (s)")
     args = ap.parse_args(argv)
 
-    ids = resources_from_config()
+    ids = resources_from_config(args.promo)
     if not ids:
-        print("Aucune ressource trouvée dans filters.yaml", file=sys.stderr)
+        print("Aucune ressource à sonder", file=sys.stderr)
         return 1
 
     results: dict[str, dict] = {}

@@ -46,16 +46,20 @@ branche `main`, dossier `/ (root)`. Au bout d'une minute la page est en ligne à
 
 ## Adapter les ressources
 
-Les IDs listés dans [index.html](index.html) (constante `SECTIONS`) et
-[docs/RESSOURCES.md](docs/RESSOURCES.md) valent pour la promo **DFGSP 2
-(2026-2027)**. Si la fac renumérote ses ressources, régénère la correspondance :
+Le picker couvre **deux promos** via un sélecteur « Ta promo » (2e / 3e année).
+Les IDs vivent dans [index.html](index.html) (constante `PROMOS`, avec `PROMOS["2"]`
+= DFGSP 2 et `PROMOS["3"]` = DFGSP 3) et sont cartographiés dans
+[docs/RESSOURCES.md](docs/RESSOURCES.md) — valables pour l'année **2026-2027**. Si
+la fac renumérote ses ressources, régénère la correspondance :
 
 ```bash
-python scripts/probe_resources.py --weeks 30
+python scripts/probe_resources.py --promo 3 --weeks 30
 ```
 
 Le script interroge chaque ressource isolément et affiche son groupe/contenu.
-Reporte les nouveaux IDs dans `SECTIONS` (dans `index.html`).
+Reporte les nouveaux IDs dans `PROMOS` (dans `index.html`). En DFGSP 3, la fac
+n'étiquette plus le n° de groupe dans le flux : les libellés TP/ED sont attribués
+dans l'ordre des ressources (voir la note dans `docs/RESSOURCES.md`).
 
 ## Partager avec tes camarades
 

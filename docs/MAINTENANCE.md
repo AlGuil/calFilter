@@ -91,11 +91,31 @@ pdftoppm -png -r 150 plan-salles.pdf assets/plan   # regénère assets/plan-1.pn
 
 ---
 
+## Deux promos : le sélecteur DFGSP 2 / DFGSP 3
+
+Le picker propose un menu **« Ta promo »** (2e / 3e année) qui bascule les groupes
+affichés. Les deux jeux de ressources vivent dans la constante **`PROMOS`** de
+[`../index.html`](../index.html) (`PROMOS["2"]` = DFGSP2, `PROMOS["3"]` = DFGSP3) ;
+chacun porte ses `sections`, sa ressource `cm` (CM de promo seuls) et son `cmName`.
+Le lien produit reste unique et partageable, et la 2e année est inchangée.
+
+Pour re-sonder une promo précise (si la fac renumérote) :
+
+```bash
+python scripts/probe_resources.py --promo 3 --weeks 30   # DFGSP3
+python scripts/probe_resources.py --promo 2 --weeks 30   # DFGSP2 (défaut)
+```
+
+> ⚠️ En DFGSP3, la fac **n'étiquette plus le n° de groupe** dans les TP/ED du flux
+> (voir [RESSOURCES.md](RESSOURCES.md)). Les libellés TP (1–5) et ED (A/B/C) sont
+> donc attribués **dans l'ordre des ressources** ; le picker affiche « vérifie tes
+> dates ». Si la fac change cet ordre, corrige le mapping dans `PROMOS["3"]`.
+
 ## Où est quoi
 
 | Quoi | Fichier |
 |---|---|
-| Groupes / ressources (picker) | `index.html` → `SECTIONS` · [RESSOURCES.md](RESSOURCES.md) |
+| Groupes / ressources (picker) | `index.html` → `PROMOS` · [RESSOURCES.md](RESSOURCES.md) |
 | Salles (aile/étage) | [`../rooms.json`](../rooms.json) — **source unique** |
 | Proxy expérimental (aile dans le lieu) | `experimental/cloudflare-worker/` |
 | Re-cartographier les ressources | `scripts/probe_resources.py` |
