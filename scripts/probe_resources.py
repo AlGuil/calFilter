@@ -54,8 +54,32 @@ RESOURCES_DFGSP3 = (
 )
 
 
+# Liste complète des ressources de la promo DFASP1 (4e année ; relevée depuis
+# l'URL fournie par la fac, dédoublonnée). Voir la cartographie dans
+# docs/RESSOURCES.md. Utilisation : --promo 4
+RESOURCES_DFASP1 = (
+    "51137,51135,51134,48353,48351,65022,64209,64208,64207,63984,63538,63537,"
+    "63536,63535,63534,9521,9520,9075,8952,8951,8883,8824,62060,61856,61855,"
+    "7903,7902,7900,7899,7895,7894,7893,7891,7889,7888,7887,7886,7884,7883,"
+    "7491,7490,7489,7488,7487,7486,7485,7484,7483,7481,7480,5377,5376,5375,"
+    "5374,5373,5372,5371,5370,5369,5309,5056,5055,5054,5053,4142,4141,4140,"
+    "4139,39870,39847,3824,51136,49424,65868,47812,47802,47801,47800,47799,"
+    "47798,47797,47796,63533,62653,62652,62651,62650,62649,62648,62647,62646,"
+    "62645,62644,7892,7890,7885,7882,7482,5368,4208,4138,4137,4055,3705,34125"
+)
+
+
+# Ressources de la promo DFASP2 (5e année ; URL fournie par la fac). La 5e année
+# est organisée par parcours, pas par groupes de TP : 4096 = tous les parcours,
+# 4098 = Officine, 4099 = Internat, 4097 = Industrie (aucun cours publié pour
+# l'instant), 32783 = nœud vide non identifié. Voir docs/RESSOURCES.md.
+# Utilisation : --promo 5
+RESOURCES_DFASP2 = "4099,4098,4097,4096,32783"
+
+
 def resources_from_config(promo: str = "2") -> list[str]:
-    raw = RESOURCES_DFGSP3 if str(promo) == "3" else RESOURCES
+    raw = {"3": RESOURCES_DFGSP3, "4": RESOURCES_DFASP1,
+           "5": RESOURCES_DFASP2}.get(str(promo), RESOURCES)
     return list(dict.fromkeys(raw.split(",")))
 
 
@@ -102,8 +126,9 @@ def ctype(summary: str) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--weeks", type=int, default=26)
-    ap.add_argument("--promo", default="2", choices=["2", "3"],
-                    help="Promo à sonder : 2 (DFGSP2, défaut) ou 3 (DFGSP3)")
+    ap.add_argument("--promo", default="2", choices=["2", "3", "4", "5"],
+                    help="Promo à sonder : 2 (DFGSP2, défaut), 3 (DFGSP3), "
+                         "4 (DFASP1) ou 5 (DFASP2)")
     ap.add_argument("--json", help="Écrire le détail JSON dans ce fichier")
     ap.add_argument("--sleep", type=float, default=0.25, help="Pause entre requêtes (s)")
     args = ap.parse_args(argv)

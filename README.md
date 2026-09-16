@@ -48,20 +48,23 @@ branche `main`, dossier `/ (root)`. Au bout d'une minute la page est en ligne à
 
 ## Adapter les ressources
 
-Le picker couvre **deux promos** via un sélecteur « Ta promo » (2e / 3e année).
+Le picker couvre **quatre promos** via un sélecteur « Ta promo » (2e / 3e / 4e / 5e année).
 Les IDs vivent dans [index.html](index.html) (constante `PROMOS`, avec `PROMOS["2"]`
-= DFGSP 2 et `PROMOS["3"]` = DFGSP 3) et sont cartographiés dans
-[docs/RESSOURCES.md](docs/RESSOURCES.md) — valables pour l'année **2026-2027**. Si
-la fac renumérote ses ressources, régénère la correspondance :
+= DFGSP 2, `PROMOS["3"]` = DFGSP 3, `PROMOS["4"]` = DFASP 1 et `PROMOS["5"]` = DFASP 2)
+et sont cartographiés dans [docs/RESSOURCES.md](docs/RESSOURCES.md) — valables pour
+l'année **2026-2027**. Si la fac renumérote ses ressources, régénère la correspondance :
 
 ```bash
-python scripts/probe_resources.py --promo 3 --weeks 30
+python scripts/probe_resources.py --promo 5 --weeks 30
 ```
 
 Le script interroge chaque ressource isolément et affiche son groupe/contenu.
 Reporte les nouveaux IDs dans `PROMOS` (dans `index.html`). En DFGSP 3, la fac
-n'étiquette plus le n° de groupe dans le flux : les libellés TP/ED sont attribués
-dans l'ordre des ressources (voir la note dans `docs/RESSOURCES.md`).
+n'étiquette plus le n° de groupe dans le flux (libellés attribués dans l'ordre des
+ressources) ; en DFASP 1 elle le remet (« Gpe N » / « Groupe N »), l'affectation y
+est donc fiable. La DFASP 2 (5e année) est organisée **par parcours** (Officine /
+Internat / Industrie), sans groupes ni CM commun (voir les notes dans
+`docs/RESSOURCES.md`).
 
 ## Partager avec tes camarades
 

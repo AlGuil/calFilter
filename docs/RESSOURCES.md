@@ -102,18 +102,18 @@ comme en 2e année.
 | `4130` | **Tous** les TP (tous groupes) | |
 
 ### Anglais (UE 10) — 5 groupes **étiquetés** par la fac
-| Ressource | Groupe | Couplé au TP (picker) |
-|---|---|---|
-| `8172` | Groupe 1 | + TP Groupe 1 |
-| `8171` | Groupe 2 | + TP Groupe 2 |
-| `8169` | Groupe 3 | + TP Groupe 3 |
-| `7847` | Groupe 4 | + TP Groupe 4 |
-| `8197` | Groupe 5 | + TP Groupe 5 |
-| `6678` | **Tous** les groupes d'Anglais | |
+| Ressource | Groupe |
+|---|---|
+| `8172` | Groupe 1 |
+| `8171` | Groupe 2 |
+| `8169` | Groupe 3 |
+| `7847` | Groupe 4 |
+| `8197` | Groupe 5 |
+| `6678` | **Tous** les groupes d'Anglais |
 
-> Le picker suppose *groupe d'Anglais = groupe de TP* : chaque case « TP Groupe N »
-> ajoute donc **la ressource TP + la ressource Anglais** du même numéro
-> (ex. Groupe 3 → `46001,8169`).
+> Le picker expose **TP et Anglais en sections séparées** : le groupe d'anglais peut
+> différer du groupe de TP. L'Anglais est étiqueté « Groupe N » dans le flux (fiable),
+> contrairement aux TP dont la numérotation est déduite de l'ordre des ressources.
 
 ### Enseignements dirigés (ED / TD) — 3 groupes (non étiquetés)
 | Ressource | Groupe (picker) |
@@ -144,10 +144,103 @@ thérapeutique/Pharmaco, UE 7 Toxico, UE 9 Biopharmacie, UE 12 Numérique en san
 > **Liste complète des ressources DFGSP3** (relevée depuis l'URL de la fac) : voir
 > la constante `RESOURCES_DFGSP3` dans `scripts/probe_resources.py`.
 
+## Ressources utiles (promo DFASP 1 — 4e année)
+
+Sondées de la même façon (chaque `resources=<id>` isolément). **Promo commune :
+`PHI 4 DFASP 1`** (~53 CM + 3 TD communs + « Rencontres »), incluse dans *toutes*
+les ressources — donc « gratuite » comme aux autres années.
+
+> ✅ **Différence favorable avec la 3e année :** le flux DFASP1 **remet le n° de
+> groupe dans la `DESCRIPTION`** — « **Gpe N** » pour les TP, « **Groupe N** » pour
+> l'anglais, « **Groupe A/B/C** » pour les ED. L'affectation des libellés du picker
+> est donc **fiable** (pas de « vérifie tes dates » comme en 3e année).
+
+### Travaux pratiques (TP) — 5 groupes **étiquetés** (« Gpe N »)
+Contenu : TP UE 1 EC 1 (Stratégies anti-infectieuses) + TP UE 3 (Toxicologie).
+| Ressource | Groupe |
+|---|---|
+| `7483` | Gpe 1 |
+| `7484` | Gpe 2 |
+| `7485` | Gpe 3 |
+| `7486` | Gpe 4 |
+| `48353` | Gpe 5 |
+| `7482` | **Tous** les TP (5 groupes) |
+
+### Anglais (UE 8) — 5 groupes **étiquetés** (« Groupe N »)
+| Ressource | Groupe |
+|---|---|
+| `5053` | Groupe 1 |
+| `5054` | Groupe 2 |
+| `5055` | Groupe 3 |
+| `5056` | Groupe 4 |
+| `5309` | Groupe 5 |
+| `4208` | **Tous** les groupes d'Anglais |
+
+> Le picker expose **TP et Anglais en sections séparées** : le groupe d'anglais peut
+> différer du groupe de TP, et chacun est étiqueté indépendamment dans le flux
+> (« Gpe N » pour les TP, « Groupe N » pour l'anglais).
+
+### Enseignements dirigés (ED / TD) — 3 groupes **étiquetés** (A/B/C)
+| Ressource | Groupe |
+|---|---|
+| `3824` | Groupe A |
+| `8824` | Groupe B |
+| `49424` | Groupe C |
+| `4137` | **Tous** les ED (3 groupes) |
+
+Contenu ED/TD : UE 2 Cardiovasculaire, UE 3 Toxicologie spécialisée, UE 6
+Oncologie, UE 7 Biothérapies…
+
+### UE de pré-orientation / parcours (selon inscription)
+| Ressource | UE | Contenu |
+|---|---|---|
+| `7487` | UE 10 | Pré-orientation officine (« Journée officinale ») |
+| `7489` | UE 11 | Échantillons biologiques (+ 1 visite labo) |
+| `9075` | UE 12 | Développement de substances d'origine végétale (CM + TD) |
+| `3705` | — | Les trois UE 10 + 11 + 12 réunies |
+
+### Génériques / autres
+| Ressource | Contenu |
+|---|---|
+| `4055` | **TOUT** (promo complète, tous groupes/parcours — 207 évts) |
+| `51137` (et la plupart des IDs de la promo, 59 évts, `nonpromo=0`) | **CM de promo seuls** — utilisé par le picker pour « Ajouter les CM de promo seuls » |
+| `47812`, `62644`–`62653` | Séances **POP** (une ressource par groupe POP ; « Groupe POP » non numéroté dans le flux — non exposé dans le picker) |
+| `34125` | Vide (aucun cours) |
+
+> **Liste complète des ressources DFASP1** (relevée depuis l'URL de la fac) : voir
+> la constante `RESOURCES_DFASP1` dans `scripts/probe_resources.py`.
+
+## Ressources utiles (promo DFASP 2, 5e année)
+
+La 5e année **n'est pas organisée par groupes de TP** mais **par parcours**
+(filière). L'URL fournie par la fac ne contient que 5 ressources, toutes des
+nœuds de parcours ; il n'y a **pas de ressource « CM de promo »** distincte (les
+parcours sont disjoints — `Officine` + `Internat` = exactement le total).
+
+### Parcours (filière)
+| Ressource | Parcours (picker) | Contenu / remarque |
+|---|---|---|
+| `4098` | **Officine** | UE Off 5/6/7/9, LC5/LC6, rencontres pro, formations 5AHU, colles, examens (≈107 évts). Sous-groupes internes « G 1 / G 2 » sur certains TP, **non séparables** (une seule ressource). |
+| `4099` | **Internat** | Prépa internat, sections I à V, UE Int 3 (≈41 évts) |
+| `4097` | **Industrie** | **Aucun cours publié** (0 évt même sur 52 semaines) — exposé pour mémoire, à vérifier auprès du secrétariat |
+| `4096` | **Tous les parcours** | Superset = Officine ∪ Internat (≈148 évts = 107 + 41) |
+| `32783` | *(non exposé)* | Nœud vide, non identifié (0 évt) |
+
+> ⚠️ Pas de CM commun en 5e année : chaque parcours porte l'intégralité de son
+> emploi du temps. Le picker masque donc, pour cette promo, le rappel « CM de promo
+> inclus » et l'option « Ajouter les CM de promo seuls » (`cm: ""` dans `PROMOS["5"]`).
+> Le **mode redoublant** est aussi masqué (pas de catalogue de matières fiable : le
+> flux étiquette les cours par UE de parcours, `UE Off N` / `Section N`, pas par UE
+> transverses).
+
+> **Liste des ressources DFASP2** : voir la constante `RESOURCES_DFASP2` dans
+> `scripts/probe_resources.py`.
+
 ## Méthode (reproductible)
 
 Script : `scripts/probe_resources.py` (interroge chaque ID isolément, agrège
 types/groupes/UE). Relancer si la fac renumérote ses ressources d'une année sur
 l'autre. Augmenter `nbWeeks` si une ressource ne renvoie pas assez de cours pour
-être identifiée. Les IDs des deux promos sont dans le script (constantes
-`RESOURCES` = DFGSP2 et `RESOURCES_DFGSP3` = DFGSP3).
+être identifiée. Les IDs des quatre promos sont dans le script (constantes
+`RESOURCES` = DFGSP2, `RESOURCES_DFGSP3` = DFGSP3, `RESOURCES_DFASP1` = DFASP1,
+`RESOURCES_DFASP2` = DFASP2), sélectionnables via `--promo 2|3|4|5`.

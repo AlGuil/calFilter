@@ -91,17 +91,20 @@ pdftoppm -png -r 150 plan-salles.pdf assets/plan   # regénère assets/plan-1.pn
 
 ---
 
-## Deux promos : le sélecteur DFGSP 2 / DFGSP 3
+## Quatre promos : le sélecteur DFGSP 2 / DFGSP 3 / DFASP 1 / DFASP 2
 
-Le picker propose un menu **« Ta promo »** (2e / 3e année) qui bascule les groupes
-affichés. Les deux jeux de ressources vivent dans la constante **`PROMOS`** de
-[`../index.html`](../index.html) (`PROMOS["2"]` = DFGSP2, `PROMOS["3"]` = DFGSP3) ;
-chacun porte ses `sections`, sa ressource `cm` (CM de promo seuls) et son `cmName`.
-Le lien produit reste unique et partageable, et la 2e année est inchangée.
+Le picker propose un menu **« Ta promo »** (2e / 3e / 4e / 5e année) qui bascule les
+groupes affichés. Les quatre jeux de ressources vivent dans la constante **`PROMOS`**
+de [`../index.html`](../index.html) (`PROMOS["2"]` = DFGSP2, `PROMOS["3"]` = DFGSP3,
+`PROMOS["4"]` = DFASP1, `PROMOS["5"]` = DFASP2) ; chacun porte ses `sections`, sa
+ressource `cm` (CM de promo seuls) et son `cmName`. Le lien produit reste unique et
+partageable, et les autres promos sont inchangées quand on en ajoute une.
 
 Pour re-sonder une promo précise (si la fac renumérote) :
 
 ```bash
+python scripts/probe_resources.py --promo 5 --weeks 30   # DFASP2
+python scripts/probe_resources.py --promo 4 --weeks 30   # DFASP1
 python scripts/probe_resources.py --promo 3 --weeks 30   # DFGSP3
 python scripts/probe_resources.py --promo 2 --weeks 30   # DFGSP2 (défaut)
 ```
@@ -110,6 +113,16 @@ python scripts/probe_resources.py --promo 2 --weeks 30   # DFGSP2 (défaut)
 > (voir [RESSOURCES.md](RESSOURCES.md)). Les libellés TP (1–5) et ED (A/B/C) sont
 > donc attribués **dans l'ordre des ressources** ; le picker affiche « vérifie tes
 > dates ». Si la fac change cet ordre, corrige le mapping dans `PROMOS["3"]`.
+>
+> ✅ En DFASP1, au contraire, le n° de groupe **est** dans le flux (« Gpe N » pour
+> les TP, « Groupe N » pour l'anglais, « Groupe A/B/C » pour les ED) : le mapping de
+> `PROMOS["4"]` est fiable, sans caveat « vérifie tes dates ».
+>
+> 🎓 La DFASP2 (5e année) est **par parcours** (Officine / Internat / Industrie), pas
+> par groupes. `PROMOS["5"]` a `cm: ""` (pas de CM commun — parcours disjoints) : le
+> picker masque alors le rappel CM, l'option « CM de promo seuls » **et** le mode
+> redoublant (pas de `MATIERES["5"]`). Le parcours Industrie (`4097`) est encore vide
+> côté fac.
 
 ## Où est quoi
 

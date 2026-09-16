@@ -5,6 +5,10 @@
  * LOCATION pour y ajouter l'aile (R1/R2/R3) et l'étage, absents de l'export
  * ADE (ex. "Amphi 2B" -> "R1 Amphi 2B (4e)").
  *
+ * Mode redoublant (param `keep`) : ne conserve que les VEVENT dont le SUMMARY
+ * correspond à l'une des matières demandées. `keep` = tokens normalisés séparés
+ * par « | » (ex. "ue 7|anglais"). Sans `keep`, le flux n'est pas filtré.
+ *
  * La table des salles est lue depuis rooms.json dans le dépôt (source unique) :
  * édite rooms.json + push, et cette table se met à jour toute seule ici (cache
  * ~1h). Plus besoin de re-coller ce worker.
@@ -85,6 +89,57 @@ function recordUsage(env, ctx, resources, weeks) {
   if (ctx && ctx.waitUntil) ctx.waitUntil(task);
 }
 
+// --- Filtrage « mode redoublant » -------------------------------------------
+// Normalise un libellé de cours pour la comparaison : minuscules, accents
+// retirés, « UE8 »/« UE 8 » ramenés à « ue 8 », espaces compactés. Doit rester
+// identique à normSum() côté index.html.
+function normSum(s) {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/ue\s*(\d+)/g, "ue $1").replace(/\s+/g, " ").trim();
+}
+
+// Un token « ue N » ne matche que ce numéro exact (« ue 1 » n'attrape pas
+// « ue 11 ») ; tout autre token est une simple sous-chaîne (ex. "anglais").
+function summaryMatches(summary, tokens) {
+  const n = normSum(summary);
+  for (const t of tokens) {
+    const m = /^ue (\d+)$/.exec(t);
+    if (m) { if (new RegExp("ue " + m[1] + "(?!\\d)").test(n)) return true; }
+    else if (n.includes(t)) return true;
+  }
+  return false;
+}
+
+// Retire chaque VEVENT dont le SUMMARY ne correspond à aucun token. Le reste du
+// flux (VCALENDAR, VTIMEZONE, en-têtes) est laissé intact.
+function filterBySummary(text, tokens) {
+  const lines = text.split(/\r?\n/);
+  const out = [];
+  let block = null;
+  for (const line of lines) {
+    if (line === "BEGIN:VEVENT") { block = [line]; continue; }
+    if (block) {
+      block.push(line);
+      if (line === "END:VEVENT") {
+        const u = [];                    // déplie les lignes repliées du bloc
+        for (const l of block) {
+          if ((l[0] === " " || l[0] === "\t") && u.length) u[u.length - 1] += l.slice(1);
+          else u.push(l);
+        }
+        let summary = "";
+        for (const l of u) {
+          if (/^SUMMARY[;:]/.test(l)) { summary = l.slice(l.indexOf(":") + 1); break; }
+        }
+        if (summaryMatches(summary, tokens)) for (const l of block) out.push(l);
+        block = null;
+      }
+      continue;
+    }
+    out.push(line);
+  }
+  return out.join("\r\n");
+}
+
 // repliage RFC 5545 (lignes <= 75 octets), suffisant pour nos valeurs courtes.
 function foldLine(line) {
   if (line.length <= 74) return line;
@@ -103,6 +158,9 @@ export default {
         { status: 400, headers: { "content-type": "text/plain; charset=utf-8" } });
     }
     const weeks = url.searchParams.get("nbWeeks") || "52";
+    // Mode redoublant : liste de matières à garder (tokens normalisés, séparés « | »).
+    const keepTokens = (url.searchParams.get("keep") || "")
+      .split("|").map((t) => normSum(t)).filter(Boolean);
 
     // Comptage anonyme (n'ajoute aucune latence : s'exécute après la réponse).
     recordUsage(env, ctx, resources, weeks);
@@ -125,6 +183,8 @@ export default {
     }
 
     let text = await feed.text();
+    // Filtrage « mode redoublant » avant l'enrichissement des salles.
+    if (keepTokens.length) text = filterBySummary(text, keepTokens);
     const transformLocation = makeEnricher(rooms.map, rooms.keys);
     // réécrit chaque propriété LOCATION (en gérant le repliage de ligne)
     text = text.replace(/^LOCATION:((?:.*)(?:\r?\n[ \t].*)*)/gm, (_m, val) => {

@@ -154,9 +154,9 @@
   <section id="tab-cal" class="tabpane" role="tabpanel">
   <div class="banner">
     <span aria-hidden="true">💡</span>
-    <div>Les <b>cours magistraux communs de la promo</b> (CM « <span id="cmName">PHI 2 DFGSP 2</span> ») sont
+    <div><span id="cmBannerCM">Les <b>cours magistraux communs de la promo</b> (CM « <span id="cmName">PHI 2 DFGSP 2</span> ») sont
     inclus automatiquement dès que tu coches au moins un groupe. Pas besoin de les
-    sélectionner. Le calendrier est celui de la fac : <b>elle s'occupe des mises à jour</b>,
+    sélectionner. </span>Le calendrier est celui de la fac : <b>elle s'occupe des mises à jour</b>,
     ton agenda se resynchronise tout seul.</div>
   </div>
 
@@ -166,12 +166,34 @@
       <select id="promo">
         <option value="2">2ᵉ année — DFGSP 2</option>
         <option value="3">3ᵉ année — DFGSP 3</option>
+        <option value="4">4ᵉ année — DFASP 1</option>
+        <option value="5">5ᵉ année — DFASP 2</option>
       </select>
       <span class="lbl" style="flex:1; min-width:170px">Change les groupes proposés ci-dessous. Le lien produit reste unique et partageable.</span>
     </div>
+    <div class="row" style="margin-top:12px">
+      <label class="opt" id="redoubLabel" style="min-width:0">
+        <input type="checkbox" id="redoubToggle">
+        <span class="dot sq"></span>
+        <span class="lbl">Mode redoublant<small>ne garder que les matières à repasser</small></span>
+      </label>
+      <span class="lbl" style="flex:1; min-width:200px">Tu ne repasses pas toute la promo&nbsp;? Coche ton groupe (ou « CM de promo seuls » dans les options), puis choisis les matières ci-dessous.</span>
+    </div>
+    <div class="hint" id="redoubSetup" hidden style="margin-top:10px">Indisponible&nbsp;: ce mode nécessite le proxy (voir la section expérimentale plus bas).</div>
   </div>
 
   <div id="sections"></div>
+
+  <div class="card" id="matiereCard" hidden>
+    <h2>Matières à repasser <span class="exp-badge">REDOUBLANT</span></h2>
+    <p class="hint">Le calendrier ne gardera que les cours (CM, ED, TP, CC, examens…) des matières cochées&nbsp;; tout le reste de la promo est retiré. Filtrage assuré par le proxy, d'après le libellé des cours dans le flux.</p>
+    <div class="row" style="margin-bottom:12px; gap:8px">
+      <button type="button" class="btn ghost" id="matAll" style="padding:6px 12px">Tout cocher</button>
+      <button type="button" class="btn ghost" id="matNone" style="padding:6px 12px">Tout décocher</button>
+    </div>
+    <div class="opts" id="matieres"></div>
+    <div class="expwarn" style="margin-top:14px"><b>⚠️ À savoir :</b> ce mode passe par le proxy — ton agenda dépend alors de sa disponibilité (comme l'option « aile »). Le filtre se base sur le libellé des cours&nbsp;: vérifie qu'aucune matière ne manque, et pense à cocher ton groupe (ou une option) pour que ses cours soient bien récupérés.</div>
+  </div>
 
   <details class="adv">
     <summary>Options avancées</summary>
@@ -186,7 +208,7 @@
         </select>
         <span class="lbl" style="flex:1; min-width:180px">Fenêtre glissante à partir d'aujourd'hui&nbsp;: un seul abonnement couvre l'année et intègre le S2 dès que la fac le publie.</span>
       </div>
-      <div class="row" style="margin-top:14px">
+      <div class="row" style="margin-top:14px" id="cmOnlyRow">
         <label class="opt" style="min-width:0">
           <input type="checkbox" id="cmOnly" data-id="4321">
           <span class="dot sq"></span>
@@ -251,7 +273,7 @@
   </section>
 
   <footer>
-    IDs de ressources relevés pour les promos <b>DFGSP 2</b> et <b>DFGSP 3</b> (2026-2027).
+    IDs de ressources relevés pour les promos <b>DFGSP 2</b>, <b>DFGSP 3</b>, <b>DFASP 1</b> et <b>DFASP 2</b> (2026-2027).
     Groupes 3e année non étiquetés par la fac : vérifie que les dates correspondent à ton groupe.<br>
     Si la fac renumérote ses ressources, régénère la liste avec
     <code>scripts/probe_resources.py</code>. Aucun serveur, aucune donnée collectée.
@@ -292,10 +314,14 @@ const PROMOS = {
     cm: "46006",            // ressource ne portant que les CM de promo DFGSP3
     cmName: "PHI 3 DFGSP 3",
     sections: [
-      { title:"Travaux pratiques (TP)", hint:"Ton groupe de TP (l'anglais du même numéro est inclus). La fac ne met plus le n° de groupe dans le flux&nbsp;: vérifie que les dates correspondent à ton groupe. Les groupes 1 et 2 incluent les TP d'officine.", items:[
-        {id:"45999,8172",label:"Groupe 1"},{id:"46000,8171",label:"Groupe 2"},
-        {id:"46001,8169",label:"Groupe 3"},{id:"46002,7847",label:"Groupe 4"},
-        {id:"46003,8197",label:"Groupe 5"} ]},
+      { title:"Travaux pratiques (TP)", hint:"Ton groupe de TP. La fac ne met plus le n° de groupe dans le flux&nbsp;: vérifie que les dates correspondent à ton groupe. Les groupes 1 et 2 incluent les TP d'officine.", items:[
+        {id:"45999",label:"Groupe 1"},{id:"46000",label:"Groupe 2"},
+        {id:"46001",label:"Groupe 3"},{id:"46002",label:"Groupe 4"},
+        {id:"46003",label:"Groupe 5"} ]},
+      { title:"Anglais (UE 10)", hint:"Ton groupe d'anglais, indépendant du groupe de TP. Étiqueté « Groupe&nbsp;N » dans le flux&nbsp;: fiable.", items:[
+        {id:"8172",label:"Groupe 1"},{id:"8171",label:"Groupe 2"},
+        {id:"8169",label:"Groupe 3"},{id:"7847",label:"Groupe 4"},
+        {id:"8197",label:"Groupe 5"} ]},
       { title:"Enseignements dirigés (ED / TD)", hint:"Ton groupe d'ED. Non étiqueté par la fac dans le flux — vérifie tes dates.", items:[
         {id:"9084",label:"Groupe A"},{id:"9085",label:"Groupe B"},{id:"9086",label:"Groupe C"} ]},
       { title:"Parcours (filière)", hint:"Ta filière de 3e année, en plus du tronc commun.", items:[
@@ -304,6 +330,94 @@ const PROMOS = {
         {id:"6415",label:"Internat",sub:"UE 15"} ]},
     ],
   },
+  "4": {
+    cm: "51137",            // ressource ne portant que les CM de promo DFASP1
+    cmName: "PHI 4 DFASP 1",
+    sections: [
+      { title:"Travaux pratiques (TP)", hint:"Ton groupe de TP (UE 1 anti-infectieux + UE 3 toxico). Le n° de groupe figure dans le flux (« Gpe&nbsp;N »)&nbsp;: l'affectation est fiable.", items:[
+        {id:"7483",label:"Groupe 1"},{id:"7484",label:"Groupe 2"},
+        {id:"7485",label:"Groupe 3"},{id:"7486",label:"Groupe 4"},
+        {id:"48353",label:"Groupe 5"} ]},
+      { title:"Anglais (UE 8)", hint:"Ton groupe d'anglais, indépendant du groupe de TP. Étiqueté « Groupe&nbsp;N » dans le flux&nbsp;: fiable.", items:[
+        {id:"5053",label:"Groupe 1"},{id:"5054",label:"Groupe 2"},
+        {id:"5055",label:"Groupe 3"},{id:"5056",label:"Groupe 4"},
+        {id:"5309",label:"Groupe 5"} ]},
+      { title:"Enseignements dirigés (ED / TD)", hint:"Ton groupe d'ED/TD (UE 2 Cardiovasculaire, UE 3 Toxico, UE 6 Oncologie, UE 7 Biothérapies…).", items:[
+        {id:"3824",label:"Groupe A"},{id:"8824",label:"Groupe B"},{id:"49424",label:"Groupe C"} ]},
+      { title:"UE de pré-orientation / parcours", hint:"Selon ton parcours et ton inscription&nbsp;: coche seulement celles qui te concernent.", items:[
+        {id:"7487",label:"Officine",sub:"UE 10 Pré-orientation officine"},
+        {id:"7489",label:"Échantillons biologiques",sub:"UE 11 (+ visite labo)"},
+        {id:"9075",label:"Substances végétales",sub:"UE 12 Dév. subst. d'origine végétale"} ]},
+    ],
+  },
+  "5": {
+    cm: "",                 // 5e année : pas de CM commun, les parcours sont disjoints
+    cmName: "DFASP 2",
+    sections: [
+      { title:"Ton parcours (filière)", hint:"En 5ᵉ année l'emploi du temps dépend entièrement de ton parcours&nbsp;: coche le tien, tout son contenu (CM, TP, ED, colles, examens, formations 5AHU…) est inclus. Les parcours ne se recouvrent pas.", items:[
+        {id:"4098",label:"Officine",sub:"UE Off 5/6/7/9, LC5/LC6, rencontres pro, 5AHU"},
+        {id:"4099",label:"Internat",sub:"Prépa internat — sections I à V"},
+        {id:"4097",label:"Industrie",sub:"aucun cours publié pour l'instant — vérifie auprès du secrétariat"} ]},
+      { title:"Toute la promo", hint:"Tous les parcours réunis, si tu préfères ne rien filtrer.", items:[
+        {id:"4096",label:"Tous les parcours DFASP 2"} ]},
+    ],
+  },
+};
+
+// Catalogue des matières par promo, pour le « mode redoublant ». Chaque matière
+// porte des « tokens » : des sous-chaînes normalisées (accents retirés, « UE8 »
+// == « UE 8 ») cherchées dans le SUMMARY des cours. Un token « ue N » ne matche
+// que ce numéro exact (« ue 1 » n'attrape pas « ue 11 »). Le proxy applique la
+// même règle (voir experimental/cloudflare-worker/worker.js). Relevé depuis les
+// flux complets des promos (4029 / 4030 / 4055) — cf. docs/RESSOURCES.md.
+const MATIERES = {
+  "2": [
+    {key:"ue2",  label:"UE 2 — Biologie cellules végétales & fongiques", tokens:["ue 2"]},
+    {key:"ue3",  label:"UE 3 — Dysfonctionnement cellulaire", tokens:["ue 3"]},
+    {key:"ue4",  label:"UE 4 — Voies d'accès aux substances actives", tokens:["ue 4"]},
+    {key:"ue5",  label:"UE 5 — Physiologie", tokens:["ue 5"]},
+    {key:"ue6",  label:"UE 6 — Infectiologie", tokens:["ue 6"]},
+    {key:"ue7",  label:"UE 7 — Biochimie", tokens:["ue 7"]},
+    {key:"ue8",  label:"UE 8 — Sciences Analytiques", tokens:["ue 8"]},
+    {key:"ue9",  label:"UE 9 — Déterminants de la santé", tokens:["ue 9"]},
+    {key:"ran",  label:"UE 11 / 12 — Remise à niveau", tokens:["ue 11","ue 12"]},
+    {key:"endo", label:"Option — Endocrinologie", tokens:["endocrinologie"]},
+    {key:"physioreg", label:"Option — Physiologie des régulations", tokens:["physiologie des regulations"]},
+    {key:"avf",  label:"Option — Risque A.V.F.", tokens:["avf"]},
+    {key:"herbier", label:"Option — Herbier", tokens:["herbier"]},
+    {key:"pop",  label:"Séances POP", tokens:["pop"]},
+  ],
+  "3": [
+    {key:"ue1",  label:"UE 1 — Biochimie", tokens:["ue 1"]},
+    {key:"ue2",  label:"UE 2 — Physiologie", tokens:["ue 2"]},
+    {key:"ue3",  label:"UE 3 — Hématologie", tokens:["ue 3"]},
+    {key:"ue4",  label:"UE 4 — Immunologie", tokens:["ue 4"]},
+    {key:"ue5",  label:"UE 5 — Bactériologie-Virologie", tokens:["ue 5"]},
+    {key:"ue6",  label:"UE 6 — Chimie thérapeutique / Pharmacologie", tokens:["ue 6"]},
+    {key:"ue7",  label:"UE 7 — Toxicologie générale", tokens:["ue 7"]},
+    {key:"ue8",  label:"UE 8 — Allergologie", tokens:["ue 8"]},
+    {key:"ue9",  label:"UE 9 — Biopharmacie", tokens:["ue 9"]},
+    {key:"ue10", label:"UE 10 — Anglais", tokens:["ue 10","anglais"]},
+    {key:"ue11", label:"UE 11 — Initiation à la recherche", tokens:["ue 11"]},
+    {key:"ue12", label:"UE 12 — Numérique en santé", tokens:["ue 12"]},
+    {key:"ue13", label:"UE 13 — PO (officine)", tokens:["ue 13"]},
+    {key:"ue14", label:"UE 14 — Industrie (procédés)", tokens:["ue 14"]},
+    {key:"ue15", label:"UE 15 — Internat", tokens:["ue 15"]},
+    {key:"pop",  label:"Séances POP", tokens:["pop"]},
+  ],
+  "4": [
+    {key:"ue1",  label:"UE 1 — Stratégies anti-infectieuses", tokens:["ue 1"]},
+    {key:"ue2",  label:"UE 2 — Cardiovasculaire", tokens:["ue 2"]},
+    {key:"ue3",  label:"UE 3 — Toxicologie spécialisée", tokens:["ue 3"]},
+    {key:"ue5",  label:"UE 5 — Troubles usage de substances & dopage", tokens:["ue 5"]},
+    {key:"ue6",  label:"UE 6 — Oncologie", tokens:["ue 6"]},
+    {key:"ue7",  label:"UE 7 — Biothérapies", tokens:["ue 7"]},
+    {key:"ue8",  label:"UE 8 — Anglais", tokens:["ue 8","anglais"]},
+    {key:"ue10", label:"UE 10 — Préorientation officine", tokens:["ue 10"]},
+    {key:"ue11", label:"UE 11 — Échantillons biologiques", tokens:["ue 11"]},
+    {key:"ue12", label:"UE 12 — Dév. substances d'origine végétale", tokens:["ue 12"]},
+    {key:"pop",  label:"Séances POP", tokens:["pop"]},
+  ],
 };
 
 // Rendu des sections de la promo courante
@@ -326,8 +440,14 @@ function renderSections(){
     });
     card.appendChild(opts); container.appendChild(card);
   });
-  cmOnly.dataset.id = P.cm;          // « CM de promo seuls » dépend de la promo
-  if(cmNameEl) cmNameEl.textContent = P.cmName;
+  // « CM de promo seuls » dépend de la promo ; certaines promos (5e année, parcours
+  // disjoints) n'ont pas de CM commun : on masque alors l'option et le rappel.
+  const hasCm = !!P.cm;
+  cmOnly.dataset.id = P.cm || "";
+  if(!hasCm) cmOnly.checked = false;
+  if(cmOnlyRow) cmOnlyRow.hidden = !hasCm;
+  if(cmBannerCM) cmBannerCM.hidden = !hasCm;
+  if(hasCm && cmNameEl) cmNameEl.textContent = P.cmName;
 }
 
 const urlEl=document.getElementById("url");
@@ -339,8 +459,33 @@ const expToggle=document.getElementById("expToggle");
 const expWarn=document.getElementById("expWarn");
 const expSetup=document.getElementById("expSetup");
 const cmOnly=document.getElementById("cmOnly");
+const cmOnlyRow=document.getElementById("cmOnlyRow");
+const cmBannerCM=document.getElementById("cmBannerCM");
+const redoubToggle=document.getElementById("redoubToggle");
+const redoubSetup=document.getElementById("redoubSetup");
+const matiereCard=document.getElementById("matiereCard");
+const matieresEl=document.getElementById("matieres");
 const boxes=()=>[...document.querySelectorAll('input[type=checkbox][data-id]')];
 const sectionBoxes=()=>boxes().filter(b=>b!==cmOnly);
+
+// --- Mode redoublant : catalogue de matières + filtrage par le proxy ---
+function renderMatieres(){
+  const cat=MATIERES[currentPromo]||[];
+  matieresEl.innerHTML="";
+  cat.forEach(m=>{
+    const l=document.createElement("label"); l.className="opt"; l.style.minWidth="0";
+    l.innerHTML=`<input type="checkbox" data-key="${m.key}"><span class="dot sq"></span><span class="lbl">${m.label}</span>`;
+    matieresEl.appendChild(l);
+  });
+}
+const matiereBoxes=()=>[...matieresEl.querySelectorAll('input[type=checkbox]')];
+function selectedMatiereKeys(){ return matiereBoxes().filter(i=>i.checked).map(i=>i.dataset.key); }
+function selectedMatiereTokens(){
+  const sel=new Set(selectedMatiereKeys()); const toks=[];
+  (MATIERES[currentPromo]||[]).forEach(m=>{ if(sel.has(m.key)) toks.push(...m.tokens); });
+  return [...new Set(toks)];
+}
+function redoubActive(){ return !!PROXY_BASE && redoubToggle.checked && (MATIERES[currentPromo]||[]).length>0; }
 
 // Un item peut porter plusieurs ressources ("45999,8172") ; on aplatit et on
 // dédoublonne. Un item sans ressource (officine, id="") ne contribue rien.
@@ -353,8 +498,15 @@ function expEnabled(){ return !!PROXY_BASE && expToggle.checked; }
 function currentUrl(){
   const ids=selectedIds();
   if(!ids.length) return "";
+  const redoub=redoubActive();
+  const toks=redoub?selectedMatiereTokens():[];
+  if(redoub && !toks.length) return "";   // au moins une matière requise
   const qs=`resources=${ids.join(",")}&nbWeeks=${weeksEl.value}`;
-  if(expEnabled()) return `${PROXY_BASE.replace(/\/$/,"")}/?${qs}`;
+  if(redoub || expEnabled()){
+    let u=`${PROXY_BASE.replace(/\/$/,"")}/?${qs}`;
+    if(redoub) u+=`&keep=${encodeURIComponent(toks.join("|"))}`;
+    return u;
+  }
   return `${BASE}?${qs}&${FIXED}`;
 }
 
@@ -362,7 +514,8 @@ function save(){
   try{ localStorage.setItem(LS_KEY, JSON.stringify({
     promo:currentPromo,
     ids:sectionBoxes().filter(b=>b.checked).map(b=>b.dataset.id),
-    cm:cmOnly.checked, weeks:weeksEl.value, exp:expToggle.checked
+    cm:cmOnly.checked, weeks:weeksEl.value, exp:expToggle.checked,
+    redoub:redoubToggle.checked, matieres:selectedMatiereKeys()
   })); }catch(e){}
 }
 function load(){
@@ -371,37 +524,85 @@ function load(){
   if(s.promo && PROMOS[s.promo]) currentPromo=s.promo;
   promoEl.value=currentPromo;
   renderSections();                 // construit les cases de la promo courante
+  renderMatieres();                 // construit les cases « matières » (mode redoublant)
   if(s.weeks) weeksEl.value=s.weeks;
   if(Array.isArray(s.ids)) sectionBoxes().forEach(b=>{ if(s.ids.includes(b.dataset.id)) b.checked=true; });
   if(s.cm) cmOnly.checked=true;
   if(s.exp) expToggle.checked=true;
+  if(s.redoub) redoubToggle.checked=true;
+  if(Array.isArray(s.matieres)) matiereBoxes().forEach(i=>{ if(s.matieres.includes(i.dataset.key)) i.checked=true; });
+  syncRedoubForPromo();
+  matiereCard.hidden = !redoubToggle.checked;
 }
-// Changer de promo réaffiche les groupes (la sélection précédente est effacée).
+// Changer de promo réaffiche les groupes ET les matières (sélection effacée).
 promoEl.addEventListener("change", ()=>{
   currentPromo=promoEl.value;
   renderSections();
+  renderMatieres();
+  syncRedoubForPromo();
+  matiereCard.hidden = !redoubToggle.checked;
   render();
 });
+// Afficher/masquer la carte des matières quand on (dé)coche le mode redoublant.
+redoubToggle.addEventListener("change", ()=>{
+  matiereCard.hidden = !redoubToggle.checked;
+  render();
+});
+document.getElementById("matAll").addEventListener("click", ()=>{ matiereBoxes().forEach(i=>i.checked=true); render(); });
+document.getElementById("matNone").addEventListener("click", ()=>{ matiereBoxes().forEach(i=>i.checked=false); render(); });
 // Configure l'option expérimentale selon que le proxy est renseigné ou non.
 function setupExp(){
   if(!PROXY_BASE){
     expToggle.checked=false; expToggle.disabled=true;
     document.getElementById("expLabel").style.opacity=".55";
     expSetup.hidden=false;
+    // Le mode redoublant repose aussi sur le proxy : indisponible sans lui.
+    redoubToggle.checked=false; redoubToggle.disabled=true;
+    document.getElementById("redoubLabel").style.opacity=".55";
+    redoubSetup.hidden=false;
+    matiereCard.hidden=true;
+  }
+}
+// Le mode redoublant n'existe que pour les promos ayant un catalogue de matières
+// (pas la 5e année). Sans catalogue, on désactive proprement le bouton.
+function syncRedoubForPromo(){
+  if(!PROXY_BASE) return;            // déjà désactivé en dur par setupExp()
+  const ok=(MATIERES[currentPromo]||[]).length>0;
+  redoubToggle.disabled=!ok;
+  document.getElementById("redoubLabel").style.opacity = ok?"":".55";
+  if(!ok){
+    redoubToggle.checked=false;
+    matiereCard.hidden=true;
+    redoubSetup.textContent="Indisponible pour cette promo (pas de catalogue de matières).";
+    redoubSetup.hidden=false;
+  }else{
+    redoubSetup.textContent="Indisponible : ce mode nécessite le proxy (voir la section expérimentale plus bas).";
+    redoubSetup.hidden=true;
   }
 }
 
 function render(){
   const url=currentUrl();
+  const redoub=redoubActive();
   if(url){
     urlEl.textContent=url; urlEl.classList.remove("empty");
     copyBtn.disabled=false; subBtn.disabled=false;
     const nsel=boxes().filter(b=>b.checked).length;
-    const plural=nsel>1;
-    countEl.innerHTML=`<b>${nsel}</b> option${plural?"s":""} sélectionnée${plural?"s":""} · CM de promo inclus`
-      + (expEnabled()?` · <b style="color:var(--warn)">aile R1/R2/R3 activée</b>`:"");
+    if(redoub){
+      const nm=selectedMatiereKeys().length;
+      countEl.innerHTML=`<b>${nm}</b> matière${nm>1?"s":""} gardée${nm>1?"s":""} · <b>${nsel}</b> ressource${nsel>1?"s":""} · <b style="color:var(--warn)">via proxy</b>`;
+    }else{
+      const plural=nsel>1;
+      const hasCm=!!(PROMOS[currentPromo]&&PROMOS[currentPromo].cm);
+      countEl.innerHTML=`<b>${nsel}</b> option${plural?"s":""} sélectionnée${plural?"s":""}`
+        + (hasCm?` · CM de promo inclus`:``)
+        + (expEnabled()?` · <b style="color:var(--warn)">aile R1/R2/R3 activée</b>`:"");
+    }
   }else{
-    urlEl.textContent="Coche au moins un groupe ci-dessus…"; urlEl.classList.add("empty");
+    let msg="Coche au moins un groupe ci-dessus…";
+    if(redoub && selectedIds().length && !selectedMatiereKeys().length)
+      msg="Coche au moins une matière à repasser ci-dessous…";
+    urlEl.textContent=msg; urlEl.classList.add("empty");
     copyBtn.disabled=true; subBtn.disabled=true; countEl.textContent="";
   }
   expWarn.hidden = !expEnabled();
@@ -424,7 +625,9 @@ subBtn.addEventListener("click", ()=>{
   window.location.href = url.replace(/^https?:\/\//,"webcal://");
 });
 document.getElementById("resetBtn").addEventListener("click", ()=>{
-  boxes().forEach(b=>b.checked=false); render();
+  boxes().forEach(b=>b.checked=false);
+  matiereBoxes().forEach(i=>i.checked=false);
+  render();
 });
 function flash(btn,txt){ const o=btn.textContent; btn.textContent=txt; setTimeout(()=>btn.textContent=o,1400); }
 
@@ -452,10 +655,12 @@ let ROOMS = [
   ["Amphi 6B","4e","R3","Puy grand Sarcouy"],
   ["Amphi 3","5e","R1","Puy de Côme"],
   ["Amphi Volcans (B)","RDC","","Accès CRBC (côté R3)"],
+  ["Amphi Limagne (A)","RDC","","Amphi RDC (côté A)"],
   ["Auditorium","RDC","","Aile ouest, près du CROUS"],
   ["Salle 001","RDC","","Officine (TP)"],
   ["Salle 002","RDC","R1",""],
   ["Salle 005 (CRBC)","RDC","","Bloc santé / CRBC"],
+  ["Salle 037-39","RDC","R1",""],
   ["Salle 040","RDC","R1",""],
   ["Salle 042","RDC","R2",""],
   ["Salle 126","1er","R1",""],
