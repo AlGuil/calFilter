@@ -420,6 +420,29 @@ const MATIERES = {
     {key:"ue12", label:"UE 12 — Dév. substances d'origine végétale", tokens:["ue 12"]},
     {key:"pop",  label:"Séances POP", tokens:["pop"]},
   ],
+  // 5e année : parcours disjoints (Officine / Internat). Les libellés n'utilisent
+  // pas « UE N » mais « UE Off N » / « UE Int N » / « Section … » : on cible donc
+  // « off 5 », « int 3 » ou le texte distinctif des sections (les chiffres romains
+  // I/III/IV se chevauchent en sous-chaîne). Relevé + validé sur les flux 4096
+  // (tous), 4098 (officine) et 4099 (internat). Coche aussi ton parcours pour que
+  // ses cours soient présents dans le flux.
+  "5": [
+    {key:"off5",  label:"Officine — UE Off 5 : Valider la prescription", tokens:["off 5"]},
+    {key:"off6",  label:"Officine — UE Off 6 (TP / TD)", tokens:["off 6"]},
+    {key:"off7",  label:"Officine — UE Off 7 : Macromycètes", tokens:["off 7"]},
+    {key:"off9",  label:"Officine — UE Off 9", tokens:["off 9"]},
+    {key:"lc5",   label:"Officine — LC5 : Prévention et dépistage", tokens:["lc5"]},
+    {key:"lc6",   label:"Officine — LC6 : Probiotiques & allégations santé", tokens:["lc6"]},
+    {key:"hu5a",  label:"Officine — Formation 5AHU (simulation, CHU)", tokens:["5ahu"]},
+    {key:"ppfh",  label:"Officine — Examen PPFH", tokens:["ppfh"]},
+    {key:"int3",  label:"Internat — UE Int 3 : Préparation à l'internat", tokens:["int 3"]},
+    {key:"secvie",label:"Internat — Section I : Sciences de la vie", tokens:["sciences de la vie"]},
+    {key:"secmat",label:"Internat — Section 1 : Sciences maths / physique / chimie", tokens:["sciences mathematiques"]},
+    {key:"secsp", label:"Internat — Section III : Santé publique & environnement", tokens:["sante publique"]},
+    {key:"secsem",label:"Internat — Section IV : Séméiologie & pathologie", tokens:["semeiologie"]},
+    {key:"secmed",label:"Internat — Section V : Sciences du médicament", tokens:["sciences du medicament"]},
+    {key:"examint",label:"Internat — Examens (DFASP2 INT, QCM dossiers)", tokens:["dfasp2 int","qcm dossiers"]},
+  ],
 };
 
 // Rendu des sections de la promo courante

@@ -237,9 +237,18 @@ parcours sont disjoints — `Officine` + `Internat` = exactement le total).
 > ⚠️ Pas de CM commun en 5e année : chaque parcours porte l'intégralité de son
 > emploi du temps. Le picker masque donc, pour cette promo, le rappel « CM de promo
 > inclus » et l'option « Ajouter les CM de promo seuls » (`cm: ""` dans `PROMOS["5"]`).
-> Le **mode redoublant** est aussi masqué (pas de catalogue de matières fiable : le
-> flux étiquette les cours par UE de parcours, `UE Off N` / `Section N`, pas par UE
-> transverses).
+
+> 🔁 **Mode redoublant disponible en 5e année** (`MATIERES["5"]`). Les libellés ne
+> suivent pas le motif « UE N » : Officine = `UE Off 5/6/7/9`, `LC5`, `LC6`, Formation
+> 5AHU, PPFH ; Internat = `UE Int 3` + `Section I…V`. Les tokens ciblent donc
+> `off 6`, `int 3`, `lc5`… et, pour les sections, leur **texte distinctif**
+> (`sciences du medicament`, `sante publique`, `semeiologie`…) car les chiffres
+> romains I/III/IV se chevauchent en sous-chaîne. Catalogue relevé et validé sur
+> `4096` (tous), `4098` (officine) et `4099` (internat) : chaque matière capte
+> exactement ses cours, sans collision (seuls « Rencontres PRO OFFICINE » et « CHOIX
+> UE » restent hors catalogue, à dessein). Comme pour les autres promos, il faut
+> cocher son parcours pour que ses cours soient dans le flux ; `keep=` se combine
+> avec le filtre `group=` de l'officine.
 
 > **Liste des ressources DFASP2** : voir la constante `RESOURCES_DFASP2` dans
 > `scripts/probe_resources.py`.

@@ -120,8 +120,13 @@ python scripts/probe_resources.py --promo 2 --weeks 30   # DFGSP2 (défaut)
 >
 > 🎓 La DFASP2 (5e année) est **par parcours** (Officine / Internat / Industrie), pas
 > par groupes. `PROMOS["5"]` a `cm: ""` (pas de CM commun — parcours disjoints) : le
-> picker masque alors le rappel CM, l'option « CM de promo seuls » **et** le mode
-> redoublant (pas de `MATIERES["5"]`). Le parcours Industrie (`4097`) est vide (stage).
+> picker masque alors le rappel CM et l'option « CM de promo seuls ». Le parcours
+> Industrie (`4097`) est vide (stage). Le **mode redoublant existe** (`MATIERES["5"]`)
+> mais ses libellés ne suivent pas le motif « UE N » : Officine = « UE Off 5/6/7/9 »,
+> LC5/LC6 ; Internat = « UE Int 3 » + « Section I…V ». Les tokens ciblent donc
+> « off 6 », « int 3 » ou le **texte distinctif** des sections (« sciences du
+> medicament »…) car les chiffres romains I/III/IV se chevauchent en sous-chaîne.
+> `keep=` et `group=` se combinent (Officine G1 redoublant → les deux filtres).
 >
 > 🔧 L'**Officine** a deux sous-groupes « G 1 » / « G 2 » marqués seulement dans la
 > `DESCRIPTION` (inséparables côté ADE). Les items officine portent un champ `group`
