@@ -9,6 +9,12 @@
  * correspond à l'une des matières demandées. `keep` = tokens normalisés séparés
  * par « | » (ex. "ue 7|anglais"). Sans `keep`, le flux n'est pas filtré.
  *
+ * Filtre de sous-groupe (param `group`) : pour les ressources qui mélangent
+ * plusieurs sous-groupes non séparables côté ADE (ex. Officine DFASP2 : « G 1 » /
+ * « G 2 » marqués seulement dans la DESCRIPTION). Ne conserve que les VEVENT sans
+ * marqueur de groupe (cours communs) OU marqués du/des groupe(s) demandé(s).
+ * `group` = marqueurs séparés par « | » (ex. "G 1"). Sans `group`, aucun filtrage.
+ *
  * La table des salles est lue depuis rooms.json dans le dépôt (source unique) :
  * édite rooms.json + push, et cette table se met à jour toute seule ici (cache
  * ~1h). Plus besoin de re-coller ce worker.
@@ -140,6 +146,52 @@ function filterBySummary(text, tokens) {
   return out.join("\r\n");
 }
 
+// --- Filtrage par sous-groupe (marqueur dans la DESCRIPTION) -----------------
+// Normalise un marqueur de groupe : minuscules, espaces retirés (« G 1 » -> « g1 »).
+function normGroup(s) {
+  return s.toLowerCase().replace(/\s+/g, "");
+}
+
+// Marqueurs de groupe présents dans une DESCRIPTION : lignes valant exactement
+// « G <n> » (séparateur iCal « \n » littéral). Renvoie ["g1"], ["g2"], ... ou [].
+function eventGroups(desc) {
+  return desc.split("\\n").map((p) => normGroup(p.trim()))
+    .filter((p) => /^g\d+$/.test(p));
+}
+
+// Retire chaque VEVENT marqué d'un groupe autre que ceux demandés. Un VEVENT sans
+// marqueur (cours commun) est toujours conservé. `wanted` = ["g1", ...].
+function filterByGroup(text, groups) {
+  const wanted = new Set(groups.map(normGroup));
+  const lines = text.split(/\r?\n/);
+  const out = [];
+  let block = null;
+  for (const line of lines) {
+    if (line === "BEGIN:VEVENT") { block = [line]; continue; }
+    if (block) {
+      block.push(line);
+      if (line === "END:VEVENT") {
+        const u = [];                    // déplie les lignes repliées du bloc
+        for (const l of block) {
+          if ((l[0] === " " || l[0] === "\t") && u.length) u[u.length - 1] += l.slice(1);
+          else u.push(l);
+        }
+        let desc = "";
+        for (const l of u) {
+          if (/^DESCRIPTION[;:]/.test(l)) { desc = l.slice(l.indexOf(":") + 1); break; }
+        }
+        const evg = eventGroups(desc);
+        if (evg.length === 0 || evg.some((g) => wanted.has(g)))
+          for (const l of block) out.push(l);
+        block = null;
+      }
+      continue;
+    }
+    out.push(line);
+  }
+  return out.join("\r\n");
+}
+
 // repliage RFC 5545 (lignes <= 75 octets), suffisant pour nos valeurs courtes.
 function foldLine(line) {
   if (line.length <= 74) return line;
@@ -161,6 +213,9 @@ export default {
     // Mode redoublant : liste de matières à garder (tokens normalisés, séparés « | »).
     const keepTokens = (url.searchParams.get("keep") || "")
       .split("|").map((t) => normSum(t)).filter(Boolean);
+    // Filtre de sous-groupe (marqueurs « G N » de la DESCRIPTION, séparés « | »).
+    const groupFilters = (url.searchParams.get("group") || "")
+      .split("|").map((g) => g.trim()).filter(Boolean);
 
     // Comptage anonyme (n'ajoute aucune latence : s'exécute après la réponse).
     recordUsage(env, ctx, resources, weeks);
@@ -183,7 +238,8 @@ export default {
     }
 
     let text = await feed.text();
-    // Filtrage « mode redoublant » avant l'enrichissement des salles.
+    // Filtrages (avant l'enrichissement des salles) : sous-groupe puis matières.
+    if (groupFilters.length) text = filterByGroup(text, groupFilters);
     if (keepTokens.length) text = filterBySummary(text, keepTokens);
     const transformLocation = makeEnricher(rooms.map, rooms.keys);
     // réécrit chaque propriété LOCATION (en gérant le repliage de ligne)

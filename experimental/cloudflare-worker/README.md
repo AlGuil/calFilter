@@ -79,6 +79,8 @@ Doit renvoyer un `.ics` où les `LOCATION` portent l'aile et l'étage.
 |---|---|---|
 | `resources` | *(obligatoire)* | IDs de ressources, séparés par des virgules |
 | `nbWeeks` | `52` | horizon (fenêtre glissante) |
+| `keep` | *(vide)* | mode redoublant : ne garde que les VEVENT dont le `SUMMARY` matche l'une des matières (tokens normalisés séparés par `\|`, ex. `ue 7\|anglais`) |
+| `group` | *(vide)* | filtre de sous-groupe : garde les VEVENT sans marqueur `G N` dans la `DESCRIPTION` (cours communs) **+** ceux du/des groupe(s) demandé(s) (séparés par `\|`, ex. `G 1`). Utilisé pour l'Officine DFASP2. |
 
 Les autres paramètres ADE (`projectId`, `calType`, `displayConfigId`) sont fixés
 par le worker.

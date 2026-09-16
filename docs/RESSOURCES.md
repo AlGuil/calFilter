@@ -220,11 +220,19 @@ parcours sont disjoints — `Officine` + `Internat` = exactement le total).
 ### Parcours (filière)
 | Ressource | Parcours (picker) | Contenu / remarque |
 |---|---|---|
-| `4098` | **Officine** | UE Off 5/6/7/9, LC5/LC6, rencontres pro, formations 5AHU, colles, examens (≈107 évts). Sous-groupes internes « G 1 / G 2 » sur certains TP, **non séparables** (une seule ressource). |
+| `4098` | **Officine** (2 sous-groupes) | UE Off 5/6/7/9, LC5/LC6, rencontres pro, formations 5AHU, colles, examens (≈107 évts). Sous-groupes « G 1 » / « G 2 » (31 évts chacun + 45 communs), marqués **uniquement dans la `DESCRIPTION`** — donc **inséparables côté ADE**. Le picker les sépare **via le proxy** (voir ci-dessous). |
 | `4099` | **Internat** | Prépa internat, sections I à V, UE Int 3 (≈41 évts) |
-| `4097` | **Industrie** | **Aucun cours publié** (0 évt même sur 52 semaines) — exposé pour mémoire, à vérifier auprès du secrétariat |
+| `4097` | **Industrie** | **Aucun cours** — étudiants en stage. Exposé pour mémoire, se remplira quand la fac publiera. |
 | `4096` | **Tous les parcours** | Superset = Officine ∪ Internat (≈148 évts = 107 + 41) |
 | `32783` | *(non exposé)* | Nœud vide, non identifié (0 évt) |
+
+> 🔧 **Officine G1/G2 = filtrage par le proxy.** La fac ne sépare pas les deux
+> groupes en ressources distinctes ; le marqueur « G 1 » / « G 2 » n'est que dans la
+> `DESCRIPTION`. Le picker route donc l'officine par le worker avec un paramètre
+> `group` (ex. `…/?resources=4098&group=G%201`) : le worker garde les cours **sans
+> marqueur** (communs) **+** ceux du groupe demandé (→ 76 évts pour G1). Sans proxy,
+> l'item retombe sur `resources=4098` direct = **les deux groupes**. Voir
+> `experimental/cloudflare-worker/worker.js` (`filterByGroup`).
 
 > ⚠️ Pas de CM commun en 5e année : chaque parcours porte l'intégralité de son
 > emploi du temps. Le picker masque donc, pour cette promo, le rappel « CM de promo

@@ -121,8 +121,14 @@ python scripts/probe_resources.py --promo 2 --weeks 30   # DFGSP2 (défaut)
 > 🎓 La DFASP2 (5e année) est **par parcours** (Officine / Internat / Industrie), pas
 > par groupes. `PROMOS["5"]` a `cm: ""` (pas de CM commun — parcours disjoints) : le
 > picker masque alors le rappel CM, l'option « CM de promo seuls » **et** le mode
-> redoublant (pas de `MATIERES["5"]`). Le parcours Industrie (`4097`) est encore vide
-> côté fac.
+> redoublant (pas de `MATIERES["5"]`). Le parcours Industrie (`4097`) est vide (stage).
+>
+> 🔧 L'**Officine** a deux sous-groupes « G 1 » / « G 2 » marqués seulement dans la
+> `DESCRIPTION` (inséparables côté ADE). Les items officine portent un champ `group`
+> et **passent par le worker** (`?resources=4098&group=G 1`), qui garde les cours
+> communs + ceux du groupe (`filterByGroup` dans `worker.js`). ⚠️ **Ce filtrage exige
+> de redéployer le worker** (nouveau paramètre `group`) — un changement de code, pas
+> juste `rooms.json`. Sans proxy, l'item retombe sur `resources=4098` (les 2 groupes).
 
 ## Où est quoi
 

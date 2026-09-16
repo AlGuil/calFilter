@@ -354,10 +354,12 @@ const PROMOS = {
     cm: "",                 // 5e année : pas de CM commun, les parcours sont disjoints
     cmName: "DFASP 2",
     sections: [
-      { title:"Ton parcours (filière)", hint:"En 5ᵉ année l'emploi du temps dépend entièrement de ton parcours&nbsp;: coche le tien, tout son contenu (CM, TP, ED, colles, examens, formations 5AHU…) est inclus. Les parcours ne se recouvrent pas.", items:[
-        {id:"4098",label:"Officine",sub:"UE Off 5/6/7/9, LC5/LC6, rencontres pro, 5AHU"},
+      { title:"Parcours Officine", hint:"Ton sous-groupe de TP officine (« G 1 » / « G 2 »). La fac ne sépare pas les groupes en ressources distinctes&nbsp;: le tri passe par le proxy, qui garde les cours communs + ceux de ton groupe. Sans proxy, tu reçois les deux groupes.", items:[
+        {id:"4098",group:"G 1",label:"Officine — Groupe 1",sub:"cours communs officine + TP du G1"},
+        {id:"4098",group:"G 2",label:"Officine — Groupe 2",sub:"cours communs officine + TP du G2"} ]},
+      { title:"Autres parcours (filière)", hint:"En 5ᵉ année l'emploi du temps dépend de ton parcours&nbsp;: coche le tien, tout son contenu est inclus. Les parcours ne se recouvrent pas.", items:[
         {id:"4099",label:"Internat",sub:"Prépa internat — sections I à V"},
-        {id:"4097",label:"Industrie",sub:"aucun cours publié pour l'instant — vérifie auprès du secrétariat"} ]},
+        {id:"4097",label:"Industrie",sub:"étudiants en stage — aucun cours pour l'instant"} ]},
       { title:"Toute la promo", hint:"Tous les parcours réunis, si tu préfères ne rien filtrer.", items:[
         {id:"4096",label:"Tous les parcours DFASP 2"} ]},
     ],
@@ -435,7 +437,8 @@ function renderSections(){
     sec.items.forEach(it=>{
       const l=document.createElement("label"); l.className="opt";
       const sub = it.sub ? `<small>${it.sub}</small>` : "";
-      l.innerHTML=`<input type="checkbox" data-id="${it.id}"><span class="dot sq"></span><span class="lbl">${it.label}${sub}</span>`;
+      const grp = it.group ? ` data-group="${it.group}"` : "";
+      l.innerHTML=`<input type="checkbox" data-id="${it.id}"${grp}><span class="dot sq"></span><span class="lbl">${it.label}${sub}</span>`;
       opts.appendChild(l);
     });
     card.appendChild(opts); container.appendChild(card);
@@ -493,6 +496,16 @@ function selectedIds(){
   const raw=boxes().filter(b=>b.checked).flatMap(b=>b.dataset.id.split(","));
   return [...new Set(raw.map(s=>s.trim()).filter(Boolean))];
 }
+// Sous-groupes cochés (ex. Officine « G 1 »). Filtrés par le proxy (data-group).
+function selectedGroups(){
+  return [...new Set(boxes().filter(b=>b.checked && b.dataset.group).map(b=>b.dataset.group))];
+}
+function groupActive(){ return !!PROXY_BASE && selectedGroups().length>0; }
+// Clé de persistance stable : les items « à groupe » partagent le même data-id
+// (ex. deux « Officine 4098 »), on ajoute donc le groupe pour les distinguer.
+// Les items sans groupe gardent la clé = data-id (rétro-compatible avec l'ancien
+// localStorage).
+function boxKey(b){ return b.dataset.group ? (b.dataset.id+"#"+b.dataset.group) : b.dataset.id; }
 function expEnabled(){ return !!PROXY_BASE && expToggle.checked; }
 
 function currentUrl(){
@@ -501,10 +514,12 @@ function currentUrl(){
   const redoub=redoubActive();
   const toks=redoub?selectedMatiereTokens():[];
   if(redoub && !toks.length) return "";   // au moins une matière requise
+  const grps=groupActive()?selectedGroups():[];
   const qs=`resources=${ids.join(",")}&nbWeeks=${weeksEl.value}`;
-  if(redoub || expEnabled()){
+  if(redoub || expEnabled() || grps.length){
     let u=`${PROXY_BASE.replace(/\/$/,"")}/?${qs}`;
     if(redoub) u+=`&keep=${encodeURIComponent(toks.join("|"))}`;
+    if(grps.length) u+=`&group=${encodeURIComponent(grps.join("|"))}`;
     return u;
   }
   return `${BASE}?${qs}&${FIXED}`;
@@ -513,7 +528,7 @@ function currentUrl(){
 function save(){
   try{ localStorage.setItem(LS_KEY, JSON.stringify({
     promo:currentPromo,
-    ids:sectionBoxes().filter(b=>b.checked).map(b=>b.dataset.id),
+    ids:sectionBoxes().filter(b=>b.checked).map(boxKey),
     cm:cmOnly.checked, weeks:weeksEl.value, exp:expToggle.checked,
     redoub:redoubToggle.checked, matieres:selectedMatiereKeys()
   })); }catch(e){}
@@ -526,7 +541,7 @@ function load(){
   renderSections();                 // construit les cases de la promo courante
   renderMatieres();                 // construit les cases « matières » (mode redoublant)
   if(s.weeks) weeksEl.value=s.weeks;
-  if(Array.isArray(s.ids)) sectionBoxes().forEach(b=>{ if(s.ids.includes(b.dataset.id)) b.checked=true; });
+  if(Array.isArray(s.ids)) sectionBoxes().forEach(b=>{ if(s.ids.includes(boxKey(b))) b.checked=true; });
   if(s.cm) cmOnly.checked=true;
   if(s.exp) expToggle.checked=true;
   if(s.redoub) redoubToggle.checked=true;
@@ -596,6 +611,7 @@ function render(){
       const hasCm=!!(PROMOS[currentPromo]&&PROMOS[currentPromo].cm);
       countEl.innerHTML=`<b>${nsel}</b> option${plural?"s":""} sélectionnée${plural?"s":""}`
         + (hasCm?` · CM de promo inclus`:``)
+        + (groupActive()?` · <b style="color:var(--warn)">groupe filtré (proxy)</b>`:``)
         + (expEnabled()?` · <b style="color:var(--warn)">aile R1/R2/R3 activée</b>`:"");
     }
   }else{
